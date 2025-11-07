@@ -1,0 +1,187 @@
+<div class="login-container">
+  <!-- Left Side - Branding Section -->
+  <div class="login-branding">
+    <div class="branding-content">
+      <div class="logo-section">
+        <img src="assets/lr.jpeg" alt="LeaseRight Logo" class="logo">
+        <h1 class="brand-name">Lease Request</h1>
+        <p class="brand-tagline">Smart Vehicle Leasing Platform</p>
+      </div>
+
+      <div class="features-section">
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-brain"></i>
+          </div>
+          <h3>AI-Powered</h3>
+          <p>Smart recommendations for best vendor matches</p>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h3>Secure</h3>
+          <p>Enterprise-grade security for your data</p>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <h3>Fast</h3>
+          <p>Quick lease approvals and processing</p>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <p class="quote">"The best platform for streamlined vehicle leasing"</p>
+        <p class="author">- Leading IT Company</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side - Login Form Section -->
+  <div class="login-form-section">
+    <div class="form-wrapper">
+      <div class="form-header">
+        <h2>Welcome Back</h2>
+        <p>Sign in to your account to continue</p>
+      </div>
+
+      <!-- Success Message -->
+      <div class="alert alert-success" *ngIf="successMessage" [@slideIn]>
+        <i class="fas fa-check-circle"></i>
+        <span>{{ successMessage }}</span>
+      </div>
+
+      <!-- Error Message -->
+      <div class="alert alert-error" *ngIf="errorMessage" [@slideIn]>
+        <i class="fas fa-exclamation-circle"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <!-- Login Form -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+
+        <!-- Email Field -->
+        <div class="form-group">
+          <label for="email" class="form-label">
+            <i class="fas fa-envelope"></i>
+            Email Address
+          </label>
+          <input 
+            id="email" 
+            type="email" 
+            class="form-input" 
+            formControlName="email" 
+            placeholder="Enter your email"
+            [class.input-error]="email?.invalid && email?.touched">
+          <span class="error-message" *ngIf="email?.invalid && email?.touched">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span *ngIf="email?.errors?.['required']">Email is required</span>
+            <span *ngIf="email?.errors?.['email']">Please enter a valid email</span>
+          </span>
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group">
+          <div class="password-label-wrapper">
+            <label for="password" class="form-label">
+              <i class="fas fa-lock"></i>
+              Password
+            </label>
+            <a href="javascript:void(0)" class="forgot-password" (click)="navigateToForgotPassword()">
+              Forgot?
+            </a>
+          </div>
+          <div class="password-wrapper">
+            <input 
+              id="password" 
+              [type]="showPassword ? 'text' : 'password'" 
+              class="form-input" 
+              formControlName="password" 
+              placeholder="Enter your password"
+              [class.input-error]="password?.invalid && password?.touched">
+            <button 
+              type="button" 
+              class="password-toggle" 
+              (click)="togglePasswordVisibility()" 
+              tabindex="-1">
+              <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            </button>
+          </div>
+          <span class="error-message" *ngIf="password?.invalid && password?.touched">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span *ngIf="password?.errors?.['required']">Password is required</span>
+            <span *ngIf="password?.errors?.['minlength']">Password must be at least 6 characters</span>
+          </span>
+        </div>
+
+        <!-- Remember Me Checkbox -->
+        <div class="form-group checkbox-group">
+          <input 
+            id="rememberMe" 
+            type="checkbox" 
+            class="checkbox-input" 
+            formControlName="rememberMe">
+          <label for="rememberMe" class="checkbox-label">
+            Remember me on this device
+          </label>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          class="btn btn-primary btn-lg" 
+          [disabled]="loginForm.invalid || isLoading"
+          [class.loading]="isLoading">
+          <span *ngIf="!isLoading">
+            <i class="fas fa-sign-in-alt"></i>
+            Sign In
+          </span>
+          <span *ngIf="isLoading" class="loader">
+            <i class="fas fa-spinner fa-spin"></i>
+            Signing in...
+          </span>
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="divider">
+        <span>Don't have an account?</span>
+      </div>
+
+      <!-- Signup Options -->
+      <div class="signup-options">
+        <button type="button" class="btn btn-secondary" (click)="navigateToSignup()">
+          <i class="fas fa-user-plus"></i>
+          Create New Account
+        </button>
+      </div>
+
+      <!-- Demo/Guest Login -->
+      <div class="guest-login">
+        <p class="demo-text">Want to explore first?</p>
+        <button 
+          type="button" 
+          class="btn btn-outline" 
+          (click)="loginAsGuest()" 
+          [disabled]="isLoading">
+          <i class="fas fa-user-secret"></i>
+          Demo Login
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <div class="form-footer">
+        <p>
+          By signing in, you agree to our
+          <a href="javascript:void(0)">Terms of Service</a>
+          and
+          <a href="javascript:void(0)">Privacy Policy</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
