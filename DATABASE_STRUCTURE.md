@@ -244,32 +244,52 @@ localStorage.removeItem('company_registrations')
 
 ---
 
-## Backup System
+## Data Export/Import System
 
-### Automatic JSON File Downloads
+### Export Data from Browser Console
 
-Every registration automatically downloads a JSON file:
-
-**Vendor:**
-- Filename: `vendor-{email-prefix}-{timestamp}.json`
-- Location: Downloads folder
-
-**Company:**
-- Filename: `company-{email-prefix}-{timestamp}.json`
-- Location: Downloads folder
-
-### Manual Database Export
+You can export the data stored in LocalStorage at any time:
 
 ```javascript
-// Export all vendors
-const vendors = JSON.parse(localStorage.getItem('vendor_registrations'));
-const blob = new Blob([JSON.stringify(vendors, null, 2)], { type: 'application/json' });
-// Download blob...
+// Export all vendors as JSON
+JSON.parse(localStorage.getItem('vendor_registrations'))
 
-// Export all companies
-const companies = JSON.parse(localStorage.getItem('company_registrations'));
-const blob = new Blob([JSON.stringify(companies, null, 2)], { type: 'application/json' });
-// Download blob...
+// Export all companies as JSON
+JSON.parse(localStorage.getItem('company_registrations'))
+
+// Copy to clipboard
+copy(JSON.parse(localStorage.getItem('vendor_registrations')))
+copy(JSON.parse(localStorage.getItem('company_registrations')))
+```
+
+### Import Data to Browser Console
+
+You can import data back into LocalStorage:
+
+```javascript
+// Import vendors
+localStorage.setItem('vendor_registrations', JSON.stringify([/* your vendor array */]))
+
+// Import companies
+localStorage.setItem('company_registrations', JSON.stringify([/* your company array */]))
+```
+
+### Using Service Methods
+
+```typescript
+// In Angular component/service:
+
+// Export vendors to JSON string
+const vendorJson = this.vendorDataService.exportVendorsAsJson();
+
+// Export companies to JSON string
+const companyJson = this.companyDataService.exportCompaniesAsJson();
+
+// Import vendors from JSON string
+this.vendorDataService.importVendorsFromJson(jsonString);
+
+// Import companies from JSON string
+this.companyDataService.importCompaniesFromJson(jsonString);
 ```
 
 ---

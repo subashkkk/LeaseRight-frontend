@@ -97,13 +97,11 @@ export class SignupCompany implements OnInit {
       this.companyDataService.saveCompanyData(companyData)
         .then(response => {
           this.isLoading = false;
-          this.successMessage = 'Company registration successful! Data saved to LocalStorage & downloaded.';
-          
-          // Download JSON file as backup
-          this.companyDataService.downloadCompanyAsJson(companyData);
+          this.successMessage = 'Company registration successful! Data saved to database.';
 
           // Log success
           console.log('📊 Total companies registered:', this.companyDataService.getTotalCompanies());
+          console.log('📋 Company data stored in LocalStorage');
 
           // Reset form
           this.companySignupForm.reset();

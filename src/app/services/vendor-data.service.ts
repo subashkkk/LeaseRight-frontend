@@ -108,46 +108,32 @@ export class VendorDataService {
   }
 
   /**
-   * Download all vendor data as JSON file
+   * Get all vendors as JSON string (for export/backup purposes)
    */
-  downloadAllVendorsAsJson(): void {
+  exportVendorsAsJson(): string {
     const vendors = this.getAllVendors();
-    const jsonStr = JSON.stringify(vendors, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    link.href = url;
-    link.download = `all-vendors-${timestamp}.json`;
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    return JSON.stringify(vendors, null, 2);
   }
 
   /**
-   * Download single vendor data as JSON file
+   * Import vendors from JSON string (for restore/import purposes)
    */
-  downloadVendorAsJson(vendorData: VendorData): void {
-    const jsonStr = JSON.stringify(vendorData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `vendor-${vendorData.email.split('@')[0]}-${timestamp}.json`;
-    
-    link.href = url;
-    link.download = filename;
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    
-    console.log(`✅ JSON file downloaded: ${filename}`);
+  importVendorsFromJson(jsonString: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        const vendors = JSON.parse(jsonString);
+        if (Array.isArray(vendors)) {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(vendors));
+          console.log('✅ Vendors imported successfully');
+          resolve({ success: true, count: vendors.length });
+        } else {
+          reject({ error: 'Invalid JSON format' });
+        }
+      } catch (error) {
+        console.error('❌ Error importing vendors:', error);
+        reject(error);
+      }
+    });
   }
 
   /**

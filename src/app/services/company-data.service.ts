@@ -108,46 +108,32 @@ export class CompanyDataService {
   }
 
   /**
-   * Download all company data as JSON file
+   * Get all companies as JSON string (for export/backup purposes)
    */
-  downloadAllCompaniesAsJson(): void {
+  exportCompaniesAsJson(): string {
     const companies = this.getAllCompanies();
-    const jsonStr = JSON.stringify(companies, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    link.href = url;
-    link.download = `all-companies-${timestamp}.json`;
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    return JSON.stringify(companies, null, 2);
   }
 
   /**
-   * Download single company data as JSON file
+   * Import companies from JSON string (for restore/import purposes)
    */
-  downloadCompanyAsJson(companyData: CompanyData): void {
-    const jsonStr = JSON.stringify(companyData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `company-${companyData.email.split('@')[0]}-${timestamp}.json`;
-    
-    link.href = url;
-    link.download = filename;
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    
-    console.log(`✅ JSON file downloaded: ${filename}`);
+  importCompaniesFromJson(jsonString: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        const companies = JSON.parse(jsonString);
+        if (Array.isArray(companies)) {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(companies));
+          console.log('✅ Companies imported successfully');
+          resolve({ success: true, count: companies.length });
+        } else {
+          reject({ error: 'Invalid JSON format' });
+        }
+      } catch (error) {
+        console.error('❌ Error importing companies:', error);
+        reject(error);
+      }
+    });
   }
 
   /**

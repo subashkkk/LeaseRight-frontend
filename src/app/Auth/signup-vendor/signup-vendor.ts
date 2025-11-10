@@ -97,13 +97,11 @@ export class SignupVendor implements OnInit {
       this.vendorDataService.saveVendorData(vendorData)
         .then(response => {
           this.isLoading = false;
-          this.successMessage = 'Vendor registration successful! Data saved to LocalStorage & downloaded.';
-          
-          // Download JSON file as backup
-          this.vendorDataService.downloadVendorAsJson(vendorData);
+          this.successMessage = 'Vendor registration successful! Data saved to database.';
 
           // Log success
           console.log('📊 Total vendors registered:', this.vendorDataService.getTotalVendors());
+          console.log('📋 Vendor data stored in LocalStorage');
 
           // Reset form
           this.vendorSignupForm.reset();
