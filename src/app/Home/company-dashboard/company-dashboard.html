@@ -30,21 +30,11 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon company">
-          <i class="fas fa-car"></i>
-        </div>
-        <div class="stat-details">
-          <h3>Leased Vehicles</h3>
-          <p class="stat-number">0</p>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon company">
           <i class="fas fa-file-contract"></i>
         </div>
         <div class="stat-details">
-          <h3>Active Contracts</h3>
-          <p class="stat-number">0</p>
+          <h3>Total Requests</h3>
+          <p class="stat-number">{{ stats.total }}</p>
         </div>
       </div>
 
@@ -53,41 +43,28 @@
           <i class="fas fa-clock"></i>
         </div>
         <div class="stat-details">
-          <h3>Pending Approvals</h3>
-          <p class="stat-number">0</p>
+          <h3>Pending</h3>
+          <p class="stat-number">{{ stats.pending }}</p>
         </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon company">
-          <i class="fas fa-dollar-sign"></i>
+        <div class="stat-icon company" style="background: linear-gradient(135deg, #28a745, #20c997);">
+          <i class="fas fa-check-circle"></i>
         </div>
         <div class="stat-details">
-          <h3>Monthly Cost</h3>
-          <p class="stat-number">$0</p>
+          <h3>Approved</h3>
+          <p class="stat-number">{{ stats.approved }}</p>
         </div>
       </div>
-    </div>
 
-    <!-- User Details Card -->
-    <div class="info-card">
-      <h3>Your Account Details</h3>
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="info-label">Email:</span>
-          <span class="info-value">{{ userEmail }}</span>
+      <div class="stat-card">
+        <div class="stat-icon company" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+          <i class="fas fa-times-circle"></i>
         </div>
-        <div class="info-item">
-          <span class="info-label">Company:</span>
-          <span class="info-value">{{ companyName }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Role:</span>
-          <span class="info-value">Company</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Status:</span>
-          <span class="info-value status-active">Active</span>
+        <div class="stat-details">
+          <h3>Rejected</h3>
+          <p class="stat-number">{{ stats.rejected }}</p>
         </div>
       </div>
     </div>
@@ -96,23 +73,169 @@
     <div class="actions-section">
       <h3>Quick Actions</h3>
       <div class="actions-grid">
-        <button class="action-btn company">
+        <button class="action-btn company" (click)="toggleVehicleBrowser()">
           <i class="fas fa-search"></i>
-          Browse Vehicles
+          Browse Vehicles ({{ availableVehicles.length }})
         </button>
-        <button class="action-btn company">
+        <button class="action-btn company" (click)="toggleRequestForm()">
           <i class="fas fa-plus-circle"></i>
           Request New Lease
         </button>
-        <button class="action-btn company">
-          <i class="fas fa-list"></i>
-          View My Leases
-        </button>
-        <button class="action-btn company">
-          <i class="fas fa-cog"></i>
-          Settings
+      </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div class="alert alert-success" *ngIf="successMessage">
+      <i class="fas fa-check-circle"></i>
+      {{ successMessage }}
+    </div>
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
+    <!-- New Lease Request Form -->
+    <div class="form-section" *ngIf="showRequestForm">
+      <div class="section-header">
+        <h3>Create New Lease Request</h3>
+        <button class="btn-close" (click)="toggleRequestForm()">
+          <i class="fas fa-times"></i>
         </button>
       </div>
+      
+      <form [formGroup]="requestForm" (ngSubmit)="submitLeaseRequest()" class="lease-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Vehicle Type</label>
+            <select formControlName="vehicleType" class="form-input">
+              <option value="">Select Type</option>
+              <option value="Sedan">Sedan</option>
+              <option value="SUV">SUV</option>
+              <option value="Truck">Truck</option>
+              <option value="Van">Van</option>
+              <option value="Electric">Electric</option>
+              <option value="Luxury">Luxury</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Quantity</label>
+            <input type="number" formControlName="quantity" class="form-input" min="1">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Lease Duration (months)</label>
+            <input type="number" formControlName="leaseDuration" class="form-input" min="1">
+          </div>
+
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" formControlName="startDate" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Budget (per month)</label>
+          <input type="number" formControlName="budget" class="form-input" placeholder="$">
+        </div>
+
+        <div class="form-group">
+          <label>Description / Requirements</label>
+          <textarea formControlName="description" class="form-input" rows="4" 
+                    placeholder="Describe your specific requirements..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="isSubmitting">
+          <i [class]="isSubmitting ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
+          {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Available Vehicles Browser -->
+    <div class="vehicles-section" *ngIf="showVehicleBrowser">
+      <div class="section-header">
+        <h3>Available Vehicles ({{ availableVehicles.length }})</h3>
+        <button class="btn-close" (click)="toggleVehicleBrowser()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="vehicles-grid" *ngIf="availableVehicles.length > 0">
+        <div class="vehicle-card" *ngFor="let vehicle of availableVehicles">
+          <div class="vehicle-header">
+            <h4>{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</h4>
+            <span class="vehicle-type">{{ vehicle.type }}</span>
+          </div>
+          <div class="vehicle-details">
+            <div class="vehicle-info">
+              <span class="vehicle-vendor">{{ vehicle.vendorCompany }}</span>
+              <span class="vehicle-price">${{ vehicle.pricePerMonth }}/month</span>
+            </div>
+            <div class="vehicle-features">
+              <span class="feature" *ngFor="let feature of vehicle.features">
+                <i class="fas fa-check"></i> {{ feature }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <p class="no-data" *ngIf="availableVehicles.length === 0">
+        <i class="fas fa-info-circle"></i>
+        No vehicles available at the moment.
+      </p>
+    </div>
+
+    <!-- My Lease Requests -->
+    <div class="requests-section">
+      <h3>My Lease Requests</h3>
+      
+      <div class="requests-table" *ngIf="myRequests.length > 0">
+        <div class="request-card" *ngFor="let request of myRequests">
+          <div class="request-header">
+            <div class="request-title">
+              <h4>{{ request.vehicleType }} - {{ request.quantity }} Vehicle(s)</h4>
+              <span [class]="'status-badge ' + getStatusClass(request.status)">
+                <i [class]="'fas ' + getStatusIcon(request.status)"></i>
+                {{ request.status | titlecase }}
+              </span>
+            </div>
+            <span class="request-date">{{ request.createdAt | date:'short' }}</span>
+          </div>
+          
+          <div class="request-details">
+            <div class="detail-item">
+              <i class="fas fa-calendar"></i>
+              <span>Duration: {{ request.leaseDuration }} months</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-calendar-start"></i>
+              <span>Start: {{ request.startDate | date:'mediumDate' }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-dollar-sign"></i>
+              <span>Budget: ${{ request.budget }}/month</span>
+            </div>
+          </div>
+          
+          <div class="request-description">
+            <p>{{ request.description }}</p>
+          </div>
+          
+          <div class="vendor-response" *ngIf="request.vendorResponse">
+            <strong>Vendor Response:</strong>
+            <p>{{ request.vendorResponse }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <p class="no-data" *ngIf="myRequests.length === 0">
+        <i class="fas fa-info-circle"></i>
+        You haven't made any lease requests yet. Click "Request New Lease" to get started!
+      </p>
     </div>
   </main>
 </div>

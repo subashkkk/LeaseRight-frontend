@@ -51,7 +51,7 @@
 
             <!-- Features List -->
             <div class="features-list" [class.visible]="signupOptions[0]?.isHovered">
-              <div class="feature-item" *ngfor="let feature of signupOptions[0]?.features; let i = index">
+              <div class="feature-item" *ngFor="let feature of signupOptions[0]?.features; let i = index">
                 <span class="feature-text">{{ feature }}</span>
               </div>
             </div>
@@ -108,7 +108,7 @@
 
             <!-- Features List -->
             <div class="features-list" [class.visible]="signupOptions[1]?.isHovered">
-              <div class="feature-item" *ngfor="let feature of signupOptions[1]?.features; let i = index">
+              <div class="feature-item" *ngFor="let feature of signupOptions[1]?.features; let i = index">
                 <span class="feature-text">{{ feature }}</span>
               </div>
             </div>

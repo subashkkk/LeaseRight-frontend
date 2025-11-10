@@ -34,84 +34,143 @@
         </div>
         <div class="stat-details">
           <h3>Total Vehicles</h3>
-          <p class="stat-number">0</p>
+          <p class="stat-number">{{ stats.totalVehicles }}</p>
         </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon">
-          <i class="fas fa-file-contract"></i>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #28a745, #20c997);">
+          <i class="fas fa-check-circle"></i>
         </div>
         <div class="stat-details">
-          <h3>Active Leases</h3>
-          <p class="stat-number">0</p>
+          <h3>Approved Requests</h3>
+          <p class="stat-number">{{ stats.approvedRequests }}</p>
         </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #ffc107, #ff9800);">
           <i class="fas fa-clock"></i>
         </div>
         <div class="stat-details">
           <h3>Pending Requests</h3>
-          <p class="stat-number">0</p>
+          <p class="stat-number">{{ stats.pendingRequests }}</p>
         </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #28a745, #20c997);">
           <i class="fas fa-dollar-sign"></i>
         </div>
         <div class="stat-details">
           <h3>Monthly Revenue</h3>
-          <p class="stat-number">$0</p>
+          <p class="stat-number">${{ stats.totalRevenue }}</p>
         </div>
       </div>
     </div>
 
-    <!-- User Details Card -->
-    <div class="info-card">
-      <h3>Your Account Details</h3>
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="info-label">Email:</span>
-          <span class="info-value">{{ userEmail }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Company:</span>
-          <span class="info-value">{{ companyName }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Role:</span>
-          <span class="info-value">Vendor</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Status:</span>
-          <span class="info-value status-active">Active</span>
-        </div>
-      </div>
+    <!-- Success/Error Messages -->
+    <div class="alert alert-success" *ngIf="successMessage">
+      <i class="fas fa-check-circle"></i>
+      {{ successMessage }}
+    </div>
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
     </div>
 
-    <!-- Quick Actions -->
-    <div class="actions-section">
-      <h3>Quick Actions</h3>
-      <div class="actions-grid">
-        <button class="action-btn">
-          <i class="fas fa-plus-circle"></i>
-          Add New Vehicle
-        </button>
-        <button class="action-btn">
-          <i class="fas fa-list"></i>
-          View All Vehicles
-        </button>
-        <button class="action-btn">
-          <i class="fas fa-chart-line"></i>
-          View Reports
-        </button>
-        <button class="action-btn">
-          <i class="fas fa-cog"></i>
-          Settings
-        </button>
+    <!-- Incoming Lease Requests -->
+    <div class="requests-section">
+      <h3>Incoming Lease Requests ({{ pendingRequests.length }})</h3>
+      
+      <div class="requests-grid" *ngIf="pendingRequests.length > 0">
+        <div class="request-card" *ngFor="let request of pendingRequests">
+          <div class="request-header">
+            <div>
+              <h4>{{ request.vehicleType }} - {{ request.quantity }} Vehicle(s)</h4>
+              <p class="company-name">{{ request.companyName }}</p>
+            </div>
+            <span class="request-date">{{ request.createdAt | date:'short' }}</span>
+          </div>
+          
+          <div class="request-details">
+            <div class="detail-item">
+              <i class="fas fa-user"></i>
+              <span>Contact: {{ request.contactPerson }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-envelope"></i>
+              <span>{{ request.companyEmail }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-calendar"></i>
+              <span>Duration: {{ request.leaseDuration }} months</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-calendar-start"></i>
+              <span>Start: {{ request.startDate | date:'mediumDate' }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-dollar-sign"></i>
+              <span>Budget: ${{ request.budget }}/month</span>
+            </div>
+          </div>
+          
+          <div class="request-description">
+            <strong>Requirements:</strong>
+            <p>{{ request.description }}</p>
+          </div>
+          
+          <button class="btn-respond" (click)="respondToRequest(request)">
+            <i class="fas fa-reply"></i>
+            Respond to Request
+          </button>
+        </div>
+      </div>
+      
+      <p class="no-data" *ngIf="pendingRequests.length === 0">
+        <i class="fas fa-info-circle"></i>
+        No pending lease requests at the moment.
+      </p>
+    </div>
+
+    <!-- Response Form Modal -->
+    <div class="modal" *ngIf="showResponseForm" (click)="closeResponseForm()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Respond to Lease Request</h3>
+          <button class="btn-close" (click)="closeResponseForm()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body" *ngIf="selectedRequest">
+          <div class="request-summary">
+            <h4>{{ selectedRequest.vehicleType }} - {{ selectedRequest.quantity }} Vehicle(s)</h4>
+            <p><strong>Company:</strong> {{ selectedRequest.companyName }}</p>
+            <p><strong>Budget:</strong> ${{ selectedRequest.budget }}/month</p>
+            <p><strong>Duration:</strong> {{ selectedRequest.leaseDuration }} months</p>
+          </div>
+          
+          <div class="form-group">
+            <label>Your Response Message:</label>
+            <textarea [(ngModel)]="vendorResponse" 
+                      class="form-input" 
+                      rows="4"
+                      placeholder="Add your response message (optional)..."></textarea>
+          </div>
+          
+          <div class="button-group">
+            <button class="btn-approve" (click)="approveRequest()" [disabled]="isProcessing">
+              <i [class]="isProcessing ? 'fas fa-spinner fa-spin' : 'fas fa-check'"></i>
+              {{ isProcessing ? 'Processing...' : 'Approve Request' }}
+            </button>
+            <button class="btn-reject" (click)="rejectRequest()" [disabled]="isProcessing">
+              <i [class]="isProcessing ? 'fas fa-spinner fa-spin' : 'fas fa-times'"></i>
+              {{ isProcessing ? 'Processing...' : 'Reject Request' }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </main>
