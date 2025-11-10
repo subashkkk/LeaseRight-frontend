@@ -1,1 +1,161 @@
-<p>signupfront works!</p>
+<html><head></head><body><div class="signup-wrapper" [class.loaded]="showAnimation">
+  <!-- Animated Background -->
+  <div class="animated-bg">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+    <div class="gradient-blob gradient-blob-1"></div>
+    <div class="gradient-blob gradient-blob-2"></div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="signup-container">
+    <!-- Header Section -->
+    <div class="signup-header">
+      <div class="header-content">
+        <h1 class="main-title">Join Lease Request</h1>
+        <p class="main-subtitle">Choose your role to get started</p>
+        <div class="header-divider"></div>
+      </div>
+    </div>
+
+    <!-- Options Section -->
+    <div class="signup-options-wrapper">
+      <div class="signup-options">
+        <!-- Vendor Option -->
+        <div class="signup-card vendor-card" [class.hovered]="signupOptions[0]?.isHovered" (mouseenter)="onMouseEnter('vendor')" (mouseleave)="onMouseLeave('vendor')">
+          <!-- Card Background -->
+          <div class="card-background">
+            <div class="card-gradient"></div>
+          </div>
+
+          <!-- Card Content -->
+          <div class="card-content">
+            <!-- Icon -->
+            <div class="card-icon">
+              <div class="icon-circle">
+                <span class="icon-emoji">{{ signupOptions[0]?.icon }}</span>
+              </div>
+            </div>
+
+            <!-- Title Section -->
+            <div class="card-header">
+              <h2 class="card-title">{{ signupOptions[0]?.title }}</h2>
+              <p class="card-subtitle">{{ signupOptions[0]?.subtitle }}</p>
+            </div>
+
+            <!-- Description -->
+            <p class="card-description">
+              {{ signupOptions[0]?.description }}
+            </p>
+
+            <!-- Features List -->
+            <div class="features-list" [class.visible]="signupOptions[0]?.isHovered">
+              <div class="feature-item" *ngfor="let feature of signupOptions[0]?.features; let i = index">
+                <span class="feature-text">{{ feature }}</span>
+              </div>
+            </div>
+
+            <!-- CTA Button -->
+            <button class="btn btn-signup-vendor" (click)="handleSignupClick('vendor')">
+              <span class="btn-text">Start as Vendor</span>
+              
+            </button>
+
+            <!-- Hover Stats -->
+            <div class="hover-stats" [class.visible]="signupOptions[0]?.isHovered">
+              <div class="stat-badge">
+                <span class="stat-number">2K+</span>
+                <span class="stat-name">Active Vendors</span>
+              </div>
+              <div class="stat-badge">
+                <span class="stat-number">$50M</span>
+                <span class="stat-name">Processed</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Decorative Elements -->
+          <div class="card-decoration"></div>
+        </div>
+
+        <!-- Company Option -->
+        <div class="signup-card company-card" [class.hovered]="signupOptions[1]?.isHovered" (mouseenter)="onMouseEnter('company')" (mouseleave)="onMouseLeave('company')">
+          <!-- Card Background -->
+          <div class="card-background">
+            <div class="card-gradient"></div>
+          </div>
+
+          <!-- Card Content -->
+          <div class="card-content">
+            <!-- Icon -->
+            <div class="card-icon">
+              <div class="icon-circle">
+                <span class="icon-emoji">{{ signupOptions[1]?.icon }}</span>
+              </div>
+            </div>
+
+            <!-- Title Section -->
+            <div class="card-header">
+              <h2 class="card-title">{{ signupOptions[1]?.title }}</h2>
+              <p class="card-subtitle">{{ signupOptions[1]?.subtitle }}</p>
+            </div>
+
+            <!-- Description -->
+            <p class="card-description">
+              {{ signupOptions[1]?.description }}
+            </p>
+
+            <!-- Features List -->
+            <div class="features-list" [class.visible]="signupOptions[1]?.isHovered">
+              <div class="feature-item" *ngfor="let feature of signupOptions[1]?.features; let i = index">
+                <span class="feature-text">{{ feature }}</span>
+              </div>
+            </div>
+
+            <!-- CTA Button -->
+            <button class="btn btn-signup-company" (click)="handleSignupClick('company')">
+              <span class="btn-text">Start as Company</span>
+              
+            </button>
+
+            <!-- Hover Stats -->
+            <div class="hover-stats" [class.visible]="signupOptions[1]?.isHovered">
+              <div class="stat-badge">
+                <span class="stat-number">500+</span>
+                <span class="stat-name">Companies</span>
+              </div>
+              <div class="stat-badge">
+                <span class="stat-number">$1B+</span>
+                <span class="stat-name">Value</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Decorative Elements -->
+          <div class="card-decoration"></div>
+        </div>
+      </div>
+
+      <!-- Bottom Text -->
+      <div class="signup-bottom">
+        <p class="already-member">
+          Already have an account?
+          <a href="javascript:void(0)" class="login-link" (click)="navigateToLogin()">
+            Sign in here
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer Section -->
+    <div class="signup-footer">
+      <p class="footer-text">
+        <a href="javascript:void(0)">Terms of Service</a> â€¢
+        <a href="javascript:void(0)">Privacy Policy</a> â€¢
+        <a href="javascript:void(0)">Contact Support</a>
+      </p>
+    </div>
+  </div>
+</div>
+</body></html>

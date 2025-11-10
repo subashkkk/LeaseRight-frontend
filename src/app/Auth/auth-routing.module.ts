@@ -7,8 +7,16 @@ const routes: Routes = [
     loadChildren: () => import('./login/login.module').then(m => m.LoginModule)
   },
   {
-    path: 'signup',
+    path: 'signup-frontpage',
     loadChildren: () => import('./signupfront/signupfront.module').then(m => m.SignupfrontModule)
+  },
+  {
+    path: 'signup-vendor',
+    loadChildren: () => import('./signup-vendor/signup-vendor.module').then(m => m.SignupVendorModule)
+  },
+  {
+    path: 'signup-company',
+    loadChildren: () => import('./signup-company/signup-company.module').then(m => m.SignupCompanyModule)
   },
   {
     path: '',

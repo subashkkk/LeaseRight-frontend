@@ -1,1 +1,214 @@
-<p>signup-vendor works!</p>
+<div class="signup-container">
+  <!-- Left Side - Branding Section -->
+  <div class="signup-branding">
+    <div class="branding-content">
+      <div class="logo-section">
+        <img src="assets/lr.jpeg" alt="LeaseRight Logo" class="logo">
+        <h1 class="brand-name">Vendor Registration</h1>
+        <p class="brand-tagline">Join our platform and grow your business</p>
+      </div>
+
+      <div class="benefits-section">
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <i class="fas fa-users"></i>
+          </div>
+          <h3>Connect with Companies</h3>
+          <p>Access 500+ companies looking for vehicles</p>
+        </div>
+
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <h3>Grow Your Business</h3>
+          <p>Increase revenue with smart platform features</p>
+        </div>
+
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <i class="fas fa-shield-check"></i>
+          </div>
+          <h3>Secure Payments</h3>
+          <p>Get paid on time with our secure system</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side - Signup Form Section -->
+  <div class="signup-form-section">
+    <div class="form-wrapper">
+      <div class="form-header">
+        <h2>Create Vendor Account</h2>
+        <p>Fill in your details to get started</p>
+      </div>
+
+      <!-- Success Message -->
+      <div class="alert alert-success" *ngIf="successMessage">
+        <i class="fas fa-check-circle"></i>
+        <span>{{ successMessage }}</span>
+      </div>
+
+      <!-- Error Message -->
+      <div class="alert alert-error" *ngIf="errorMessage">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <!-- Signup Form -->
+      <form [formGroup]="vendorSignupForm" (ngSubmit)="onSubmit()" class="signup-form">
+        
+        <!-- Name Row -->
+        <div class="form-row">
+          <!-- First Name Field -->
+          <div class="form-group">
+            <label for="firstName" class="form-label">
+              <i class="fas fa-user"></i>
+              First Name
+            </label>
+            <input 
+              id="firstName" 
+              type="text" 
+              class="form-input" 
+              formControlName="firstName" 
+              placeholder="Enter first name"
+              [class.input-error]="firstName?.invalid && firstName?.touched">
+            <span class="error-message" *ngIf="firstName?.invalid && firstName?.touched">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span *ngIf="firstName?.errors?.['required']">First name is required</span>
+              <span *ngIf="firstName?.errors?.['minlength']">Minimum 2 characters required</span>
+            </span>
+          </div>
+
+          <!-- Last Name Field -->
+          <div class="form-group">
+            <label for="lastName" class="form-label">
+              <i class="fas fa-user"></i>
+              Last Name
+            </label>
+            <input 
+              id="lastName" 
+              type="text" 
+              class="form-input" 
+              formControlName="lastName" 
+              placeholder="Enter last name"
+              [class.input-error]="lastName?.invalid && lastName?.touched">
+            <span class="error-message" *ngIf="lastName?.invalid && lastName?.touched">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span *ngIf="lastName?.errors?.['required']">Last name is required</span>
+              <span *ngIf="lastName?.errors?.['minlength']">Minimum 2 characters required</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Email Field -->
+        <div class="form-group">
+          <label for="email" class="form-label">
+            <i class="fas fa-envelope"></i>
+            Email Address
+          </label>
+          <input 
+            id="email" 
+            type="email" 
+            class="form-input" 
+            formControlName="email" 
+            placeholder="Enter your email"
+            [class.input-error]="email?.invalid && email?.touched">
+          <span class="error-message" *ngIf="email?.invalid && email?.touched">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span *ngIf="email?.errors?.['required']">Email is required</span>
+            <span *ngIf="email?.errors?.['email']">Please enter a valid email</span>
+          </span>
+        </div>
+
+        <!-- Company Name Field -->
+        <div class="form-group">
+          <label for="companyName" class="form-label">
+            <i class="fas fa-building"></i>
+            Company Name
+          </label>
+          <input 
+            id="companyName" 
+            type="text" 
+            class="form-input" 
+            formControlName="companyName" 
+            placeholder="Enter company name"
+            [class.input-error]="companyName?.invalid && companyName?.touched">
+          <span class="error-message" *ngIf="companyName?.invalid && companyName?.touched">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span *ngIf="companyName?.errors?.['required']">Company name is required</span>
+            <span *ngIf="companyName?.errors?.['minlength']">Minimum 3 characters required</span>
+          </span>
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group">
+          <label for="password" class="form-label">
+            <i class="fas fa-lock"></i>
+            Password
+          </label>
+          <div class="password-wrapper">
+            <input 
+              id="password" 
+              [type]="showPassword ? 'text' : 'password'" 
+              class="form-input" 
+              formControlName="password" 
+              placeholder="Enter password (min 8 characters)"
+              [class.input-error]="password?.invalid && password?.touched">
+            <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
+              <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            </button>
+          </div>
+          <span class="error-message" *ngIf="password?.invalid && password?.touched">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span *ngIf="password?.errors?.['required']">Password is required</span>
+            <span *ngIf="password?.errors?.['minlength']">Password must be at least 8 characters</span>
+          </span>
+        </div>
+
+        <!-- Confirm Password Field -->
+        <div class="form-group">
+          <label for="confirmPassword" class="form-label">
+            <i class="fas fa-lock"></i>
+            Re-enter Password
+          </label>
+          <div class="password-wrapper">
+            <input 
+              id="confirmPassword" 
+              [type]="showConfirmPassword ? 'text' : 'password'" 
+              class="form-input" 
+              formControlName="confirmPassword" 
+              placeholder="Re-enter password"
+              [class.input-error]="(confirmPassword?.invalid && confirmPassword?.touched) || (vendorSignupForm.errors?.['passwordMismatch'] && confirmPassword?.touched)">
+            <button type="button" class="toggle-password" (click)="toggleConfirmPasswordVisibility()">
+              <i [class]="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            </button>
+          </div>
+          <span class="error-message" *ngIf="confirmPassword?.invalid && confirmPassword?.touched">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span *ngIf="confirmPassword?.errors?.['required']">Please re-enter password</span>
+          </span>
+          <span class="error-message" *ngIf="vendorSignupForm.errors?.['passwordMismatch'] && confirmPassword?.touched">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Passwords do not match</span>
+          </span>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-submit" [disabled]="isLoading">
+          <span *ngIf="!isLoading">Create Account</span>
+          <span *ngIf="isLoading">
+            <i class="fas fa-spinner fa-spin"></i> Creating Account...
+          </span>
+        </button>
+      </form>
+
+      <!-- Footer Links -->
+      <div class="form-footer">
+        <p>Already have an account? <a href="javascript:void(0)" (click)="navigateToLogin()">Sign In</a></p>
+        <p>Are you a company? <a href="javascript:void(0)" (click)="navigateToCompanySignup()">Sign up as Company</a></p>
+      </div>
+    </div>
+  </div>
+</div>

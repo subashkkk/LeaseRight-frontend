@@ -35,7 +35,6 @@
   height: 400px;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
   border-radius: 50%;
-  animation: float 6s ease-in-out infinite;
 }
 
 .login-branding::after {
@@ -47,17 +46,8 @@
   height: 300px;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
   border-radius: 50%;
-  animation: float 8s ease-in-out infinite reverse;
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(20px);
-  }
-}
 
 .branding-content {
   position: relative;
@@ -74,7 +64,6 @@
   width: 80px;
   height: 80px;
   margin-bottom: 20px;
-  animation: slideInDown 0.6s ease-out;
 }
 
 .brand-name {
@@ -82,37 +71,14 @@
   font-weight: 700;
   margin: 10px 0;
   letter-spacing: -0.5px;
-  animation: slideInUp 0.6s ease-out 0.1s both;
 }
 
 .brand-tagline {
   font-size: 14px;
   color: #b3b3b3;
   margin: 0;
-  animation: slideInUp 0.6s ease-out 0.2s both;
 }
 
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 .features-section {
   display: flex;
@@ -120,14 +86,6 @@
   gap: 30px;
   margin-bottom: 50px;
 }
-
-.feature-item {
-  animation: slideInUp 0.6s ease-out both;
-}
-
-.feature-item:nth-child(1) { animation-delay: 0.3s; }
-.feature-item:nth-child(2) { animation-delay: 0.4s; }
-.feature-item:nth-child(3) { animation-delay: 0.5s; }
 
 .feature-icon {
   font-size: 24px;
@@ -151,7 +109,6 @@
 .testimonial {
   padding: 20px;
   border-left: 3px solid #ffffff;
-  animation: slideInUp 0.6s ease-out 0.6s both;
 }
 
 .quote {
@@ -503,21 +460,11 @@
 }
 
 /* ========================================
-   SIGNUP & GUEST LOGIN
+   SIGNUP OPTIONS
    ======================================== */
 
 .signup-options {
   margin-bottom: 16px;
-}
-
-.guest-login {
-  text-align: center;
-}
-
-.demo-text {
-  font-size: 12px;
-  color: #757575;
-  margin-bottom: 8px;
 }
 
 /* ========================================

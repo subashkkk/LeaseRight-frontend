@@ -1,0 +1,167 @@
+import { Injectable } from '@angular/core';
+// import { HttpClient } from '@angular/common/http'; // Uncomment when backend is ready
+// import { Observable } from 'rxjs'; // Uncomment when backend is ready
+
+export interface CompanyData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  companyName: string;
+  password: string;
+  role: string;
+  registeredAt: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CompanyDataService {
+  private readonly STORAGE_KEY = 'company_registrations';
+  // private readonly API_URL = 'http://localhost:3000/api/companies'; // Your backend API URL
+
+  constructor(
+    // private http: HttpClient // Uncomment when backend is ready
+  ) {}
+
+  /**
+   * Save company data
+   * Currently: Saves to LocalStorage
+   * Future: Will send POST request to backend API
+   */
+  saveCompanyData(companyData: CompanyData): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        // === CURRENT IMPLEMENTATION (LocalStorage) ===
+        const existingData = this.getAllCompanies();
+        existingData.push(companyData);
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(existingData));
+        
+        console.log('✅ Company data saved to LocalStorage:', companyData);
+        resolve({ success: true, message: 'Company registered successfully' });
+
+        // === FUTURE IMPLEMENTATION (Backend API) ===
+        // When backend is ready, replace above code with:
+        /*
+        this.http.post(this.API_URL, companyData).subscribe({
+          next: (response) => {
+            console.log('✅ Company data saved to backend:', response);
+            resolve(response);
+          },
+          error: (error) => {
+            console.error('❌ Error saving to backend:', error);
+            reject(error);
+          }
+        });
+        */
+      } catch (error) {
+        console.error('❌ Error saving company data:', error);
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Get all companies
+   * Currently: Retrieves from LocalStorage
+   * Future: Will send GET request to backend API
+   */
+  getAllCompanies(): CompanyData[] {
+    // === CURRENT IMPLEMENTATION (LocalStorage) ===
+    try {
+      const data = localStorage.getItem(this.STORAGE_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error('❌ Error retrieving companies:', error);
+      return [];
+    }
+
+    // === FUTURE IMPLEMENTATION (Backend API) ===
+    // When backend is ready, replace above code with:
+    /*
+    return this.http.get<CompanyData[]>(this.API_URL);
+    */
+  }
+
+  /**
+   * Get company by email
+   * Currently: Searches LocalStorage
+   * Future: Will send GET request to backend API
+   */
+  getCompanyByEmail(email: string): CompanyData | null {
+    // === CURRENT IMPLEMENTATION (LocalStorage) ===
+    const companies = this.getAllCompanies();
+    return companies.find(c => c.email === email) || null;
+
+    // === FUTURE IMPLEMENTATION (Backend API) ===
+    // When backend is ready, replace above code with:
+    /*
+    return this.http.get<CompanyData>(`${this.API_URL}/${email}`);
+    */
+  }
+
+  /**
+   * Check if email already exists
+   */
+  isEmailRegistered(email: string): boolean {
+    const company = this.getCompanyByEmail(email);
+    return company !== null;
+  }
+
+  /**
+   * Download all company data as JSON file
+   */
+  downloadAllCompaniesAsJson(): void {
+    const companies = this.getAllCompanies();
+    const jsonStr = JSON.stringify(companies, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    link.href = url;
+    link.download = `all-companies-${timestamp}.json`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Download single company data as JSON file
+   */
+  downloadCompanyAsJson(companyData: CompanyData): void {
+    const jsonStr = JSON.stringify(companyData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `company-${companyData.email.split('@')[0]}-${timestamp}.json`;
+    
+    link.href = url;
+    link.download = filename;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    console.log(`✅ JSON file downloaded: ${filename}`);
+  }
+
+  /**
+   * Clear all company data (for testing purposes)
+   */
+  clearAllCompanies(): void {
+    localStorage.removeItem(this.STORAGE_KEY);
+    console.log('🗑️ All company data cleared from LocalStorage');
+  }
+
+  /**
+   * Get total number of registered companies
+   */
+  getTotalCompanies(): number {
+    return this.getAllCompanies().length;
+  }
+}

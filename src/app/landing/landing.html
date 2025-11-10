@@ -1,0 +1,61 @@
+<div class="landing-wrapper" [class.sliding]="isSliding">
+  <!-- Branding Section (Centered Full Screen) -->
+  <div class="login-branding" [class.compress]="isSliding">
+    <div class="branding-content">
+      <div class="logo-section">
+        <img src="assets/lr.jpeg" alt="LeaseRight Logo" class="logo">
+        <h1 class="brand-name">Lease Request</h1>
+        <p class="brand-tagline">Smart Vehicle Leasing Platform</p>
+      </div>
+
+      <div class="features-section">
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-brain"></i>
+          </div>
+          <h3>AI-Powered</h3>
+          <p>Smart recommendations for best vendor matches</p>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h3>Secure</h3>
+          <p>Enterprise-grade security for your data</p>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <h3>Fast</h3>
+          <p>Quick lease approvals and processing</p>
+        </div>
+      </div>
+
+      <!-- CTA Button -->
+      <div class="cta-button-section">
+        <button class="btn-get-started" (click)="onLoginClick()">
+          <span>Get Started</span>
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <div class="testimonial">
+        <p class="quote">"The best platform for streamlined vehicle leasing"</p>
+        <p class="author">- Leading IT Company</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel that slides in -->
+  <div class="slide-in-panel" [class.active]="isSliding">
+    <div class="panel-content">
+      <div class="loading-animation">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -125,35 +125,4 @@ export class Login implements OnInit {
   navigateToForgotPassword(): void {
     this.router.navigate(['/auth/forgot-password']);
   }
-
-  loginAsGuest(): void {
-    this.isLoading = true;
-    const guestData = {
-      email: 'guest@carleasing.com',
-      password: 'guest123'
-    };
-
-    this.authService.login(guestData).subscribe({
-      next: (response) => {
-        this.isLoading = false;
-        this.successMessage = 'Guest login successful! Redirecting...';
-        
-        if (response.token) {
-          localStorage.setItem('authToken', response.token);
-        }
-        if (response.userRole) {
-          localStorage.setItem('userRole', response.userRole);
-        }
-        
-        setTimeout(() => {
-          this.router.navigate(['/home/company-dashboard']);
-        }, 1000);
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.errorMessage = 'Guest login not available at the moment.';
-        console.error('Guest login error:', error);
-      }
-    });
-  }
 }

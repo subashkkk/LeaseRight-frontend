@@ -1,22 +1,20 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Routes } from '@angular/router';
-import { ReactiveFormsModule } from '@angular/forms';
-import { SignupFrontComponent } from './signupfront';
+import { Landing } from './landing';
 
 const routes: Routes = [
   {
     path: '',
-    component: SignupFrontComponent
+    component: Landing
   }
 ];
 
 @NgModule({
   imports: [
     CommonModule,
-    ReactiveFormsModule,
-    SignupFrontComponent,
+    Landing,
     RouterModule.forChild(routes)
   ]
 })
-export class SignupfrontModule { }
+export class LandingModule { }
