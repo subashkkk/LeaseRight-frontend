@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-// import { HttpClient } from '@angular/common/http'; // Uncomment when backend is ready
-// import { Observable } from 'rxjs'; // Uncomment when backend is ready
+import { HttpClient } from '@angular/common/http';
+import { Observable, of, catchError } from 'rxjs';
+import { API_CONFIG, getApiUrl } from '../config/api.config';
 
 export interface VendorData {
   firstName: string;
@@ -16,46 +17,55 @@ export interface VendorData {
   providedIn: 'root'
 })
 export class VendorDataService {
+  // Toggle between backend API and LocalStorage
+  private USE_BACKEND_API = true; // Set to true to use your backend
+  
   private readonly STORAGE_KEY = 'vendor_registrations';
-  // private readonly API_URL = 'http://localhost:3000/api/vendors'; // Your backend API URL
 
   constructor(
-    // private http: HttpClient // Uncomment when backend is ready
+    private http: HttpClient
   ) {}
 
   /**
    * Save vendor data
-   * Currently: Saves to LocalStorage
-   * Future: Will send POST request to backend API
+   * Uses backend API if USE_BACKEND_API is true, otherwise uses LocalStorage
    */
   saveVendorData(vendorData: VendorData): Promise<any> {
     return new Promise((resolve, reject) => {
-      try {
-        // === CURRENT IMPLEMENTATION (LocalStorage) ===
-        const existingData = this.getAllVendors();
-        existingData.push(vendorData);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(existingData));
+      if (this.USE_BACKEND_API) {
+        // Backend API implementation
+        const url = getApiUrl(API_CONFIG.VENDOR.REGISTER);
+        console.log(' Saving vendor via backend API:', url);
         
-        console.log('✅ Vendor data saved to LocalStorage:', vendorData);
-        resolve({ success: true, message: 'Vendor registered successfully' });
-
-        // === FUTURE IMPLEMENTATION (Backend API) ===
-        // When backend is ready, replace above code with:
-        /*
-        this.http.post(this.API_URL, vendorData).subscribe({
-          next: (response) => {
-            console.log('✅ Vendor data saved to backend:', response);
+        this.http.post(url, vendorData).subscribe({
+          next: (response: any) => {
+            console.log(' Vendor saved to backend:', response);
             resolve(response);
           },
           error: (error) => {
-            console.error('❌ Error saving to backend:', error);
+            console.error(' Backend vendor save failed:', error);
             reject(error);
           }
         });
-        */
-      } catch (error) {
-        console.error('❌ Error saving vendor data:', error);
-        reject(error);
+      } else {
+        // LocalStorage fallback
+        try {
+          const existingData = this.getAllVendors();
+          existingData.push(vendorData);
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(existingData));
+          
+          console.log(' Vendor data saved to LocalStorage');
+          console.log(' Total vendors:', existingData.length);
+          
+          resolve({
+            success: true,
+            message: 'Vendor registration successful',
+            data: vendorData
+          });
+        } catch (error) {
+          console.error(' Error saving vendor data:', error);
+          reject(error);
+        }
       }
     });
   }

@@ -1,14 +1,17 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { Router } from '@angular/router';
-import { delay } from 'rxjs/operators';
+import { delay, map, catchError } from 'rxjs/operators';
+import { API_CONFIG, getApiUrl } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:3000/api/auth'; // Update with your API URL
+  // Toggle between backend API and LocalStorage
+  private USE_BACKEND_API = true; // Set to true to use your backend
+  
   private readonly VENDOR_STORAGE_KEY = 'vendor_registrations';
   private readonly COMPANY_STORAGE_KEY = 'company_registrations';
 
@@ -17,8 +20,52 @@ export class AuthService {
     private router: Router
   ) { }
 
+  /**
+   * Login with email and password
+   * Uses backend API if USE_BACKEND_API is true, otherwise uses LocalStorage
+   */
   login(credentials: { email: string; password: string }): Observable<any> {
-    // Check LocalStorage for vendor and company registrations
+    if (this.USE_BACKEND_API) {
+      // Backend API login
+      const url = getApiUrl(API_CONFIG.AUTH.LOGIN);
+      console.log('🔐 Logging in via backend API:', url);
+      
+      return this.http.post(url, credentials).pipe(
+        map((response: any) => {
+          console.log('✅ Backend login successful:', response);
+          
+          // Store authentication data
+          if (response.token) {
+            localStorage.setItem('authToken', response.token);
+          }
+          if (response.user) {
+            localStorage.setItem('user', JSON.stringify(response.user));
+          }
+          if (response.userRole) {
+            localStorage.setItem('userRole', response.userRole);
+          }
+          if (response.userName || (response.user && response.user.firstName)) {
+            const userName = response.userName || `${response.user.firstName} ${response.user.lastName}`;
+            localStorage.setItem('userName', userName);
+          }
+          
+          return response;
+        }),
+        catchError(error => {
+          console.error('❌ Backend login failed:', error);
+          return throwError(() => error);
+        })
+      );
+    } else {
+      // LocalStorage-based login (fallback)
+      return this.loginWithLocalStorage(credentials);
+    }
+  }
+
+  /**
+   * LocalStorage-based login (for testing without backend)
+   */
+  private loginWithLocalStorage(credentials: { email: string; password: string }): Observable<any> {
     const vendors = this.getStoredUsers(this.VENDOR_STORAGE_KEY);
     const companies = this.getStoredUsers(this.COMPANY_STORAGE_KEY);
 
@@ -42,8 +89,8 @@ export class AuthService {
         userName: `${vendor.firstName} ${vendor.lastName}`
       };
       
-      console.log('✅ Vendor login successful:', vendor.email);
-      return of(response).pipe(delay(1000)); // Simulate network delay
+      console.log('✅ LocalStorage vendor login successful:', vendor.email);
+      return of(response).pipe(delay(500));
     }
 
     // Search in companies
@@ -66,19 +113,15 @@ export class AuthService {
         userName: `${company.firstName} ${company.lastName}`
       };
       
-      console.log('✅ Company login successful:', company.email);
-      return of(response).pipe(delay(1000)); // Simulate network delay
+      console.log('✅ LocalStorage company login successful:', company.email);
+      return of(response).pipe(delay(500));
     }
 
     // If no match found, return error
-    console.log('❌ Login failed: Invalid credentials');
+    console.log('❌ LocalStorage login failed: Invalid credentials');
     return throwError(() => ({
       error: { message: 'Invalid email or password' }
-    })).pipe(delay(1000));
-
-    // === FUTURE IMPLEMENTATION (Backend API) ===
-    // When backend is ready, uncomment this:
-    // return this.http.post(`${this.apiUrl}/login`, credentials);
+    })).pipe(delay(500));
   }
 
   private getStoredUsers(storageKey: string): any[] {
@@ -98,8 +141,23 @@ export class AuthService {
     return btoa(`${email}:${timestamp}`);
   }
 
+  /**
+   * Register a new user (vendor or company)
+   */
   signup(userData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/signup`, userData);
+    if (this.USE_BACKEND_API) {
+      const url = getApiUrl(API_CONFIG.AUTH.SIGNUP);
+      console.log('📝 Signing up via backend API:', url);
+      return this.http.post(url, userData).pipe(
+        catchError(error => {
+          console.error('❌ Backend signup failed:', error);
+          return throwError(() => error);
+        })
+      );
+    } else {
+      // LocalStorage fallback (handled by VendorDataService/CompanyDataService)
+      return of({ success: true, message: 'Use respective data services for LocalStorage signup' });
+    }
   }
 
   logout(): void {

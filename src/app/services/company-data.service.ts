@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-// import { HttpClient } from '@angular/common/http'; // Uncomment when backend is ready
-// import { Observable } from 'rxjs'; // Uncomment when backend is ready
+import { HttpClient } from '@angular/common/http';
+import { Observable, of, catchError } from 'rxjs';
+import { API_CONFIG, getApiUrl } from '../config/api.config';
 
 export interface CompanyData {
   firstName: string;
@@ -16,46 +17,55 @@ export interface CompanyData {
   providedIn: 'root'
 })
 export class CompanyDataService {
+  // Toggle between backend API and LocalStorage
+  private USE_BACKEND_API = true; // Set to true to use your backend
+  
   private readonly STORAGE_KEY = 'company_registrations';
-  // private readonly API_URL = 'http://localhost:3000/api/companies'; // Your backend API URL
 
   constructor(
-    // private http: HttpClient // Uncomment when backend is ready
+    private http: HttpClient
   ) {}
 
   /**
    * Save company data
-   * Currently: Saves to LocalStorage
-   * Future: Will send POST request to backend API
+   * Uses backend API if USE_BACKEND_API is true, otherwise uses LocalStorage
    */
   saveCompanyData(companyData: CompanyData): Promise<any> {
     return new Promise((resolve, reject) => {
-      try {
-        // === CURRENT IMPLEMENTATION (LocalStorage) ===
-        const existingData = this.getAllCompanies();
-        existingData.push(companyData);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(existingData));
+      if (this.USE_BACKEND_API) {
+        // Backend API implementation
+        const url = getApiUrl(API_CONFIG.COMPANY.REGISTER);
+        console.log(' Saving company via backend API:', url);
         
-        console.log('✅ Company data saved to LocalStorage:', companyData);
-        resolve({ success: true, message: 'Company registered successfully' });
-
-        // === FUTURE IMPLEMENTATION (Backend API) ===
-        // When backend is ready, replace above code with:
-        /*
-        this.http.post(this.API_URL, companyData).subscribe({
-          next: (response) => {
-            console.log('✅ Company data saved to backend:', response);
+        this.http.post(url, companyData).subscribe({
+          next: (response: any) => {
+            console.log(' Company saved to backend:', response);
             resolve(response);
           },
           error: (error) => {
-            console.error('❌ Error saving to backend:', error);
+            console.error(' Backend company save failed:', error);
             reject(error);
           }
         });
-        */
-      } catch (error) {
-        console.error('❌ Error saving company data:', error);
-        reject(error);
+      } else {
+        // LocalStorage fallback
+        try {
+          const existingData = this.getAllCompanies();
+          existingData.push(companyData);
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(existingData));
+          
+          console.log(' Company data saved to LocalStorage');
+          console.log(' Total companies:', existingData.length);
+          
+          resolve({
+            success: true,
+            message: 'Company registration successful',
+            data: companyData
+          });
+        } catch (error) {
+          console.error(' Error saving company data:', error);
+          reject(error);
+        }
       }
     });
   }
