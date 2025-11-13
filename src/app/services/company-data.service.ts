@@ -18,7 +18,7 @@ export interface CompanyData {
 })
 export class CompanyDataService {
   // Toggle between backend API and LocalStorage
-  private USE_BACKEND_API = true; // Set to true to use your backend
+  private USE_BACKEND_API = false; // Set to true to use your backend
   
   private readonly STORAGE_KEY = 'company_registrations';
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-// import { HttpClient } from '@angular/common/http'; // Uncomment when backend is ready
-// import { Observable } from 'rxjs'; // Uncomment when backend is ready
+import { HttpClient } from '@angular/common/http';
+import { Observable, of, catchError } from 'rxjs';
+import { API_CONFIG, getApiUrl } from '../config/api.config';
 
 export interface LeaseRequest {
   id: string;
@@ -36,14 +37,19 @@ export interface Vehicle {
   providedIn: 'root'
 })
 export class LeaseRequestService {
+  // Toggle between backend API and LocalStorage
+  private USE_BACKEND_API = false; // Set to true to use your backend
+  
   private readonly REQUESTS_KEY = 'lease_requests';
   private readonly VEHICLES_KEY = 'available_vehicles';
-  // private readonly API_URL = 'http://localhost:3000/api/lease-requests'; // Your backend API URL
 
   constructor(
-    // private http: HttpClient // Uncomment when backend is ready
+    private http: HttpClient
   ) {
-    this.initializeDummyData();
+    // Initialize dummy data only if using LocalStorage
+    if (!this.USE_BACKEND_API) {
+      this.initializeDummyData();
+    }
   }
 
   /**
@@ -128,26 +134,45 @@ export class LeaseRequestService {
 
   /**
    * Create a new lease request
+   * Uses backend API if USE_BACKEND_API is true, otherwise uses LocalStorage
    */
   createLeaseRequest(requestData: Omit<LeaseRequest, 'id' | 'status' | 'createdAt'>): Promise<any> {
     return new Promise((resolve, reject) => {
-      try {
-        const newRequest: LeaseRequest = {
-          ...requestData,
-          id: this.generateId(),
-          status: 'pending',
-          createdAt: new Date().toISOString()
-        };
+      if (this.USE_BACKEND_API) {
+        // Backend API implementation
+        const url = getApiUrl(API_CONFIG.LEASE_REQUEST.CREATE);
+        console.log('📝 Creating lease request via backend API:', url);
+        
+        this.http.post(url, requestData).subscribe({
+          next: (response: any) => {
+            console.log('✅ Lease request created via backend:', response);
+            resolve(response);
+          },
+          error: (error) => {
+            console.error('❌ Backend lease request creation failed:', error);
+            reject(error);
+          }
+        });
+      } else {
+        // LocalStorage fallback
+        try {
+          const newRequest: LeaseRequest = {
+            ...requestData,
+            id: this.generateId(),
+            status: 'pending',
+            createdAt: new Date().toISOString()
+          };
 
-        const requests = this.getAllLeaseRequests();
-        requests.push(newRequest);
-        localStorage.setItem(this.REQUESTS_KEY, JSON.stringify(requests));
+          const requests = this.getAllLeaseRequests();
+          requests.push(newRequest);
+          localStorage.setItem(this.REQUESTS_KEY, JSON.stringify(requests));
 
-        console.log('✅ Lease request created:', newRequest);
-        resolve({ success: true, message: 'Lease request submitted successfully', data: newRequest });
-      } catch (error) {
-        console.error('❌ Error creating lease request:', error);
-        reject(error);
+          console.log('✅ Lease request created (LocalStorage):', newRequest);
+          resolve({ success: true, message: 'Lease request submitted successfully', data: newRequest });
+        } catch (error) {
+          console.error('❌ Error creating lease request:', error);
+          reject(error);
+        }
       }
     });
   }
@@ -181,29 +206,53 @@ export class LeaseRequestService {
 
   /**
    * Update request status
+   * Uses backend API if USE_BACKEND_API is true, otherwise uses LocalStorage
    */
   updateRequestStatus(requestId: string, status: 'approved' | 'rejected', vendorResponse?: string): Promise<any> {
     return new Promise((resolve, reject) => {
-      try {
-        const requests = this.getAllLeaseRequests();
-        const index = requests.findIndex(req => req.id === requestId);
+      if (this.USE_BACKEND_API) {
+        // Backend API implementation
+        const endpoint = status === 'approved' 
+          ? API_CONFIG.LEASE_REQUEST.APPROVE.replace(':id', requestId)
+          : API_CONFIG.LEASE_REQUEST.REJECT.replace(':id', requestId);
+        const url = getApiUrl(endpoint);
+        console.log(`📝 Updating request status via backend API (${status}):`, url);
+        
+        const body = vendorResponse ? { vendorResponse } : {};
+        
+        this.http.post(url, body).subscribe({
+          next: (response: any) => {
+            console.log(`✅ Request ${requestId} ${status} via backend:`, response);
+            resolve(response);
+          },
+          error: (error) => {
+            console.error(`❌ Backend request status update failed:`, error);
+            reject(error);
+          }
+        });
+      } else {
+        // LocalStorage fallback
+        try {
+          const requests = this.getAllLeaseRequests();
+          const index = requests.findIndex(req => req.id === requestId);
 
-        if (index === -1) {
-          reject({ error: 'Request not found' });
-          return;
+          if (index === -1) {
+            reject({ error: 'Request not found' });
+            return;
+          }
+
+          requests[index].status = status;
+          if (vendorResponse) {
+            requests[index].vendorResponse = vendorResponse;
+          }
+
+          localStorage.setItem(this.REQUESTS_KEY, JSON.stringify(requests));
+          console.log(`✅ Request ${requestId} status updated to ${status} (LocalStorage)`);
+          resolve({ success: true, message: 'Request status updated' });
+        } catch (error) {
+          console.error('❌ Error updating request status:', error);
+          reject(error);
         }
-
-        requests[index].status = status;
-        if (vendorResponse) {
-          requests[index].vendorResponse = vendorResponse;
-        }
-
-        localStorage.setItem(this.REQUESTS_KEY, JSON.stringify(requests));
-        console.log(`✅ Request ${requestId} status updated to ${status}`);
-        resolve({ success: true, message: 'Request status updated' });
-      } catch (error) {
-        console.error('❌ Error updating request status:', error);
-        reject(error);
       }
     });
   }

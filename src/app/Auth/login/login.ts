@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { slideInAnimation, fadeInAnimation } from '../auth.animations';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
   animations: [slideInAnimation, fadeInAnimation]
@@ -27,11 +27,27 @@ export class Login implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    console.log('🔍 Login component ngOnInit called');
+    console.log('📍 Current URL:', this.router.url);
+    
     // Check if user is already logged in
-    if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/home/dashboard']);
+    const isAuth = this.authService.isAuthenticated();
+    console.log('🔐 Is authenticated:', isAuth);
+    
+    if (isAuth) {
+      const userRole = localStorage.getItem('userRole');
+      console.log('👤 User role:', userRole);
+      console.log('⚠️  User already authenticated, redirecting to dashboard...');
+      
+      if (userRole === 'vendor') {
+        this.router.navigate(['/home/vendor-dashboard']);
+      } else {
+        this.router.navigate(['/home/company-dashboard']);
+      }
+      return;
     }
 
+    console.log('✅ No authentication found, initializing login form');
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],

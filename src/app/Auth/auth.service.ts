@@ -10,7 +10,7 @@ import { API_CONFIG, getApiUrl } from '../config/api.config';
 })
 export class AuthService {
   // Toggle between backend API and LocalStorage
-  private USE_BACKEND_API = true; // Set to true to use your backend
+  private USE_BACKEND_API = false; // Set to true to use your backend
   
   private readonly VENDOR_STORAGE_KEY = 'vendor_registrations';
   private readonly COMPANY_STORAGE_KEY = 'company_registrations';
