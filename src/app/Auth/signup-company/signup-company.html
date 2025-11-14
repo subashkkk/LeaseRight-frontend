@@ -59,49 +59,45 @@
       <!-- Signup Form -->
       <form [formGroup]="companySignupForm" (ngSubmit)="onSubmit()" class="signup-form">
         
-        <!-- Name Row -->
-        <div class="form-row">
-          <!-- First Name Field -->
+          <!-- Company Name Field -->
           <div class="form-group">
             <label for="firstName" class="form-label">
               <i class="fas fa-user"></i>
-              First Name
+              Company Name
             </label>
             <input 
               id="firstName" 
               type="text" 
               class="form-input" 
               formControlName="firstName" 
-              placeholder="Enter first name"
+              placeholder="Company Name"
               [class.input-error]="firstName?.invalid && firstName?.touched">
             <span class="error-message" *ngIf="firstName?.invalid && firstName?.touched">
               <i class="fas fa-exclamation-triangle"></i>
-              <span *ngIf="firstName?.errors?.['required']">First name is required</span>
+              <span *ngIf="firstName?.errors?.['required']">Company name is required</span>
               <span *ngIf="firstName?.errors?.['minlength']">Minimum 2 characters required</span>
             </span>
           </div>
 
-          <!-- Last Name Field -->
+          <!-- Contact Number Field -->
           <div class="form-group">
             <label for="lastName" class="form-label">
               <i class="fas fa-user"></i>
-              Last Name
+              Contact Number
             </label>
             <input 
               id="lastName" 
               type="text" 
               class="form-input" 
               formControlName="lastName" 
-              placeholder="Enter last name"
+              placeholder="Contact Number"
               [class.input-error]="lastName?.invalid && lastName?.touched">
             <span class="error-message" *ngIf="lastName?.invalid && lastName?.touched">
               <i class="fas fa-exclamation-triangle"></i>
               <span *ngIf="lastName?.errors?.['required']">Last name is required</span>
               <span *ngIf="lastName?.errors?.['minlength']">Minimum 2 characters required</span>
             </span>
-          </div>
-        </div>
-
+          </div> 
         <!-- Email Field -->
         <div class="form-group">
           <label for="email" class="form-label">
@@ -113,7 +109,7 @@
             type="email" 
             class="form-input" 
             formControlName="email" 
-            placeholder="Enter your email"
+            placeholder="Email Address"
             [class.input-error]="email?.invalid && email?.touched">
           <span class="error-message" *ngIf="email?.invalid && email?.touched">
             <i class="fas fa-exclamation-triangle"></i>
@@ -123,21 +119,21 @@
         </div>
 
         <!-- Company Name Field -->
-        <div class="form-group">
+        <div class="form-grou">
           <label for="companyName" class="form-label">
             <i class="fas fa-building"></i>
-            Company Name
+            GST Number
           </label>
           <input 
             id="companyName" 
             type="text" 
             class="form-input" 
             formControlName="companyName" 
-            placeholder="Enter company name"
+            placeholder="GST Number"
             [class.input-error]="companyName?.invalid && companyName?.touched">
           <span class="error-message" *ngIf="companyName?.invalid && companyName?.touched">
             <i class="fas fa-exclamation-triangle"></i>
-            <span *ngIf="companyName?.errors?.['required']">Company name is required</span>
+            <span *ngIf="companyName?.errors?.['required']">GST Number is required</span>
             <span *ngIf="companyName?.errors?.['minlength']">Minimum 3 characters required</span>
           </span>
         </div>
@@ -154,7 +150,7 @@
               [type]="showPassword ? 'text' : 'password'" 
               class="form-input" 
               formControlName="password" 
-              placeholder="Enter password (min 8 characters)"
+              placeholder="Password (min 8 characters)"
               [class.input-error]="password?.invalid && password?.touched">
             <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
               <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
@@ -179,7 +175,7 @@
               [type]="showConfirmPassword ? 'text' : 'password'" 
               class="form-input" 
               formControlName="confirmPassword" 
-              placeholder="Re-enter password"
+              placeholder="Re-enter Password"
               [class.input-error]="(confirmPassword?.invalid && confirmPassword?.touched) || (companySignupForm.errors?.['passwordMismatch'] && confirmPassword?.touched)">
             <button type="button" class="toggle-password" (click)="toggleConfirmPasswordVisibility()">
               <i [class]="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
@@ -187,7 +183,7 @@
           </div>
           <span class="error-message" *ngIf="confirmPassword?.invalid && confirmPassword?.touched">
             <i class="fas fa-exclamation-triangle"></i>
-            <span *ngIf="confirmPassword?.errors?.['required']">Please re-enter password</span>
+            <span *ngIf="confirmPassword?.errors?.['required']">Please re-enter Password</span>
           </span>
           <span class="error-message" *ngIf="companySignupForm.errors?.['passwordMismatch'] && confirmPassword?.touched">
             <i class="fas fa-exclamation-triangle"></i>
