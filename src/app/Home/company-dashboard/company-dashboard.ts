@@ -4,11 +4,12 @@ import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../Auth/auth.service';
 import { LeaseRequestService, LeaseRequest, Vehicle } from '../../services/lease-request.service';
+import { QuotationsComponent } from '../../company-dashboard/quotations/quotations';
 
 @Component({
   selector: 'app-company-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, QuotationsComponent],
   templateUrl: './company-dashboard.html',
   styleUrl: './company-dashboard.css',
 })
@@ -28,6 +29,9 @@ export class CompanyDashboard implements OnInit {
   // Data
   myRequests: LeaseRequest[] = [];
   availableVehicles: Vehicle[] = [];
+  
+  // Vendor quotations visibility
+  showVendorQuotations: boolean = false;
   
   // UI State
   showRequestForm: boolean = false;
@@ -110,6 +114,16 @@ export class CompanyDashboard implements OnInit {
   toggleVehicleBrowser(): void {
     this.showVehicleBrowser = !this.showVehicleBrowser;
     this.showRequestForm = false;
+    this.showVendorQuotations = false;
+  }
+
+  toggleVendorQuotations(): void {
+    this.showVendorQuotations = !this.showVendorQuotations;
+    // Hide other sections when showing quotations
+    if (this.showVendorQuotations) {
+      this.showRequestForm = false;
+      this.showVehicleBrowser = false;
+    }
   }
 
   submitLeaseRequest(): void {

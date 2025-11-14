@@ -22,6 +22,9 @@ export class CompanyDataService {
   
   private readonly STORAGE_KEY = 'company_registrations';
 
+  private baseUrl = 'http://localhost:8080/api'; // adjust if needed
+
+
   constructor(
     private http: HttpClient
   ) {}
@@ -160,4 +163,19 @@ export class CompanyDataService {
   getTotalCompanies(): number {
     return this.getAllCompanies().length;
   }
+
+getCompanyQuotations(companyId: string): Observable<any> {
+  const url = `${this.baseUrl}/company/${companyId}/quotations`;
+  return this.http.get(url);
+}
+
+updateQuotationStatus(quotationId: string, status: string): Observable<any> {
+  const url = `${this.baseUrl}/quotations/${quotationId}/status`;
+  return this.http.put(url, { status });
+}
+
+
+
+
+
 }

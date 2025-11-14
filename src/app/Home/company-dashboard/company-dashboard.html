@@ -81,7 +81,17 @@
           <i class="fas fa-plus-circle"></i>
           Request New Lease
         </button>
+        <button class="action-btn company" (click)="toggleVendorQuotations()">
+          <i class="fas fa-file-invoice"></i>
+          Quotation Details
+        </button>
       </div>
+    </div>
+
+    <!-- Vendor Quotations Panel (quick action result) -->
+    <div class="requests-section" *ngIf="showVendorQuotations" style="margin-bottom: 30px;">
+      <h3>Vendor Quotations</h3>
+      <app-quotations></app-quotations>
     </div>
 
     <!-- Success/Error Messages -->

@@ -1,0 +1,330 @@
+<div class="quotations-container">
+  <!-- Error Alert -->
+  <div *ngIf="error" class="alert error">
+    <span class="close-btn" (click)="error = null">&times;</span>
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading quotations...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading" class="content">
+    <!-- Filters and Search -->
+    <div class="filters-container">
+      <div class="search-box">
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          (input)="onSearch()"
+          placeholder="Search by ID, vendor, or request..."
+          class="search-input"
+        >
+        <span class="search-icon">🔍</span>
+      </div>
+
+      <div class="filters">
+        <div class="filter-group">
+          <label for="statusFilter">Status:</label>
+          <select 
+            id="statusFilter" 
+            [(ngModel)]="statusFilter" 
+            (change)="onStatusFilterChange()"
+            class="filter-select"
+          >
+            <option *ngFor="let option of statusOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="view-toggle">
+          <button 
+            [class.active]="viewMode === 'list'" 
+            (click)="toggleViewMode('list')"
+            title="List View"
+          >
+            ☰
+          </button>
+          <button 
+            [class.active]="viewMode === 'grid'" 
+            (click)="toggleViewMode('grid')"
+            title="Grid View"
+          >
+            ⏹️
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quotations List -->
+    <div *ngIf="filteredQuotations.length > 0">
+      <!-- List View -->
+      <div *ngIf="viewMode === 'list'" class="quotations-list">
+        <div class="list-header">
+          <div class="header-cell">QUOTATION ID</div>
+          <div class="header-cell">VENDOR</div>
+          <div class="header-cell">REQUEST ID</div>
+          <div class="header-cell text-right">AMOUNT</div>
+          <div class="header-cell">STATUS</div>
+          <div class="header-cell">VALID UNTIL</div>
+          <div class="header-cell">ACTIONS</div>
+        </div>
+
+        <div class="list-body">
+          <div *ngFor="let quote of paginatedQuotations" class="list-row" (click)="viewQuotation(quote)">
+            <div class="cell">
+              <strong>{{ quote.id }}</strong>
+            </div>
+            <div class="cell">
+              {{ quote.vendorName }}
+            </div>
+            <div class="cell">
+              {{ quote.requestId }}
+            </div>
+            <div class="cell text-right">
+              <strong>${{ getTotalAmount(quote) | number:'1.2-2' }}</strong>
+            </div>
+            <div class="cell">
+              <span class="status-badge" [ngClass]="'status-' + quote.status">
+                {{ quote.status | titlecase }}
+              </span>
+            </div>
+            <div class="cell">
+              {{ quote.validUntil | date:'MMM d, y' }}
+            </div>
+            <div class="cell actions">
+              <button 
+                *ngIf="quote.status !== 'accepted'"
+                (click)="$event.stopPropagation(); onStatusChange(quote, 'accepted')"
+                class="btn btn-success"
+                title="Accept Quotation"
+              >
+                ✓
+              </button>
+              <button 
+                *ngIf="quote.status !== 'rejected'"
+                (click)="$event.stopPropagation(); onStatusChange(quote, 'rejected')"
+                class="btn btn-danger"
+                title="Reject Quotation"
+              >
+                ✕
+              </button>
+              <button 
+                (click)="$event.stopPropagation(); viewQuotation(quote)"
+                class="btn btn-info"
+                title="View Details"
+              >
+                👁️
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid View -->
+      <div *ngIf="viewMode === 'grid'" class="quotations-grid">
+        <div *ngFor="let quote of paginatedQuotations" class="quotation-card">
+          <div class="card-header">
+            <h3>Quotation #{{ quote.id }}</h3>
+            <span class="status-badge" [ngClass]="'status-' + quote.status">
+              {{ quote.status | titlecase }}
+            </span>
+          </div>
+          
+          <div class="card-body">
+            <div class="info-row">
+              <span class="label">Vendor:</span>
+              <span class="value">{{ quote.vendorName }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Request ID:</span>
+              <span class="value">{{ quote.requestId }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Amount:</span>
+              <span class="value amount">${{ getTotalAmount(quote) | number:'1.2-2' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Submitted:</span>
+              <span class="value">{{ quote.submittedDate | date:'MMM d, y' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Valid Until:</span>
+              <span class="value" [class.expiring-soon]="isExpiringSoon(quote.validUntil)">
+                {{ quote.validUntil | date:'MMM d, y' }}
+              </span>
+            </div>
+            
+            <div *ngIf="quote.notes" class="notes">
+              <span class="label">Notes:</span>
+              <p class="value">{{ quote.notes }}</p>
+            </div>
+            
+            <div class="card-actions">
+              <button 
+                *ngIf="quote.status !== 'accepted'"
+                (click)="$event.stopPropagation(); onStatusChange(quote, 'accepted')"
+                class="btn btn-success"
+                title="Accept Quotation"
+              >
+                Accept
+              </button>
+              <button 
+                *ngIf="quote.status !== 'rejected'"
+                (click)="$event.stopPropagation(); onStatusChange(quote, 'rejected')"
+                class="btn btn-danger"
+                title="Reject Quotation"
+              >
+                Reject
+              </button>
+              <button 
+                (click)="$event.stopPropagation(); viewQuotation(quote)"
+                class="btn btn-info"
+              >
+                View Details
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button 
+          [disabled]="currentPage === 1" 
+          (click)="changePage(currentPage - 1)"
+          class="pagination-btn"
+        >
+          &laquo; Previous
+        </button>
+        
+        <div class="page-numbers">
+          <span>Page {{ currentPage }} of {{ totalPages }}</span>
+        </div>
+        
+        <button 
+          [disabled]="currentPage === totalPages" 
+          (click)="changePage(currentPage + 1)"
+          class="pagination-btn"
+        >
+          Next &raquo;
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredQuotations.length === 0" class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h3>No quotations found</h3>
+      <p>There are no quotations matching your current filters.</p>
+      <button 
+        *ngIf="searchTerm || statusFilter !== 'all'" 
+        (click)="searchTerm = ''; statusFilter = 'all'; applyFilters()"
+        class="btn btn-primary"
+      >
+        Clear Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Quotation Details Modal -->
+  <div *ngIf="selectedQuotation" class="modal-overlay" (click)="closeDetails()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Quotation Details - {{ selectedQuotation.id }}</h2>
+        <button class="close-btn" (click)="closeDetails()">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="detail-label">Vendor:</span>
+            <span class="detail-value">{{ selectedQuotation.vendorName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Request ID:</span>
+            <span class="detail-value">{{ selectedQuotation.requestId }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Status:</span>
+            <span class="detail-value">
+              <span class="status-badge" [ngClass]="'status-' + selectedQuotation.status">
+                {{ selectedQuotation.status | titlecase }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Submitted:</span>
+            <span class="detail-value">{{ selectedQuotation.submittedDate | date:'mediumDate' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Valid Until:</span>
+            <span class="detail-value">{{ selectedQuotation.validUntil | date:'mediumDate' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Total Amount:</span>
+            <span class="detail-value amount">${{ getTotalAmount(selectedQuotation) | number:'1.2-2' }}</span>
+          </div>
+          
+          <div class="detail-item full-width" *ngIf="selectedQuotation.notes">
+            <span class="detail-label">Notes:</span>
+            <p class="detail-value notes">{{ selectedQuotation.notes }}</p>
+          </div>
+        </div>
+        
+        <div class="items-table">
+          <h3>Items</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th class="text-right">Quantity</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of selectedQuotation.items">
+                <td>{{ item.description }}</td>
+                <td class="text-right">{{ item.quantity }}</td>
+                <td class="text-right">${{ item.unitPrice | number:'1.2-2' }}</td>
+                <td class="text-right">${{ item.total | number:'1.2-2' }}</td>
+              </tr>
+              <tr class="total-row">
+                <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                <td class="text-right"><strong>${{ getTotalAmount(selectedQuotation) | number:'1.2-2' }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="modal-actions">
+          <button 
+            *ngIf="selectedQuotation.status !== 'accepted'"
+            (click)="onStatusChange(selectedQuotation, 'accepted')"
+            class="btn btn-success"
+          >
+            Accept Quotation
+          </button>
+          <button 
+            *ngIf="selectedQuotation.status !== 'rejected'"
+            (click)="onStatusChange(selectedQuotation, 'rejected')"
+            class="btn btn-danger"
+          >
+            Reject Quotation
+          </button>
+          <button 
+            (click)="closeDetails()"
+            class="btn btn-secondary"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
