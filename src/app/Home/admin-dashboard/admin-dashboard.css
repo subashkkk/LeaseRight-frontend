@@ -1,0 +1,19 @@
+@import '../company-dashboard/company-dashboard.css';
+
+/* Admin dashboard specific tweaks */
+
+/* Slightly adjust welcome text spacing for admin */
+.welcome-section p {
+  font-size: 15px;
+}
+
+/* Make admin quick-action icons a bit larger for emphasis */
+.actions-section .action-btn i {
+  font-size: 20px;
+}
+
+/* Tighten spacing between admin request cards */
+.requests-table {
+  gap: 12px;
+}
+

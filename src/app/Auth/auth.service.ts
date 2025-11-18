@@ -14,6 +14,14 @@ export class AuthService {
   
   private readonly VENDOR_STORAGE_KEY = 'vendor_registrations';
   private readonly COMPANY_STORAGE_KEY = 'company_registrations';
+  private readonly ADMIN_USERS: Array<{ email: string; password: string; firstName: string; lastName: string }> = [
+    {
+      email: 'admin@leaseright.com',
+      password: 'Admin@123',
+      firstName: 'System',
+      lastName: 'Admin'
+    }
+  ];
 
   constructor(
     private http: HttpClient,
@@ -68,6 +76,30 @@ export class AuthService {
   private loginWithLocalStorage(credentials: { email: string; password: string }): Observable<any> {
     const vendors = this.getStoredUsers(this.VENDOR_STORAGE_KEY);
     const companies = this.getStoredUsers(this.COMPANY_STORAGE_KEY);
+
+    // Check admin users (mocked for now)
+    const admin = this.ADMIN_USERS.find(a => 
+      a.email === credentials.email && a.password === credentials.password
+    );
+
+    if (admin) {
+      const response = {
+        success: true,
+        message: 'Login successful',
+        token: this.generateToken(admin.email),
+        user: {
+          email: admin.email,
+          firstName: admin.firstName,
+          lastName: admin.lastName,
+          companyName: 'LeaseRight Admin'
+        },
+        userRole: 'admin',
+        userName: `${admin.firstName} ${admin.lastName}`
+      };
+
+      console.log('✅ LocalStorage admin login successful:', admin.email);
+      return of(response).pipe(delay(500));
+    }
 
     // Search in vendors
     const vendor = vendors.find(v => 

@@ -70,11 +70,11 @@
     </div>
 
     <!-- Success/Error Messages -->
-    <div class="alert alert-success" *ngIf="successMessage">
+    <div class="alert alert-success" *ngIf="successMessage && !showResponseForm">
       <i class="fas fa-check-circle"></i>
       {{ successMessage }}
     </div>
-    <div class="alert alert-error" *ngIf="errorMessage">
+    <div class="alert alert-error" *ngIf="errorMessage && !showResponseForm">
       <i class="fas fa-exclamation-circle"></i>
       {{ errorMessage }}
     </div>
@@ -145,29 +145,125 @@
         </div>
         
         <div class="modal-body" *ngIf="selectedRequest">
-          <div class="request-summary">
-            <h4>{{ selectedRequest.vehicleType }} - {{ selectedRequest.quantity }} Vehicle(s)</h4>
-            <p><strong>Company:</strong> {{ selectedRequest.companyName }}</p>
-            <p><strong>Budget:</strong> ${{ selectedRequest.budget }}/month</p>
-            <p><strong>Duration:</strong> {{ selectedRequest.leaseDuration }} months</p>
+          <!-- Inline validation message inside quotation view -->
+          <div class="inline-error" *ngIf="errorMessage">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ errorMessage }}
           </div>
-          
+
+          <div class="request-summary">
+            <div class="quote-header-grid">
+              <div>
+                <p><strong>Company Name:</strong> {{ selectedRequest.companyName }}</p>
+                <p><strong>Company Email:</strong> {{ selectedRequest.companyEmail }}</p>
+                <p><strong>Company GST:</strong></p>
+                <p><strong>Request ID:</strong> {{ selectedRequest.id }}</p>
+                <p><strong>Requested Vehicle:</strong> {{ selectedRequest.vehicleType }} - {{ selectedRequest.quantity }} Vehicle(s)</p>
+              </div>
+              <div class="quote-header-right">
+                <p><strong>Vendor Company:</strong> {{ companyName }}</p>
+                <p><strong>Vendor Email:</strong> {{ userEmail }}</p>
+                <p><strong>Vendor GST:</strong></p>
+                <p><strong>Vendor Address:</strong></p>
+                <p><strong>Vendor Contact:</strong> {{ userName }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quotation Header -->
+          <div class="request-details" style="margin-bottom: 16px;">
+            <div class="detail-item">
+              <strong>Q.No:&nbsp;</strong> {{ quotation.quotationNumber }}
+            </div>
+            <div class="detail-item">
+              <strong>Q.Date:&nbsp;</strong>
+              <input type="date" class="form-input" style="max-width: 180px;"
+                     [(ngModel)]="quotation.quotationDate" />
+            </div>
+            <div class="detail-item">
+              <strong>Valid Until:&nbsp;</strong>
+              <input type="date" class="form-input" style="max-width: 180px;"
+                     [(ngModel)]="quotation.validUntil" />
+            </div>
+          </div>
+
+          <!-- Line Item Table -->
+          <div class="request-description">
+            <strong>Quotation Details</strong>
+            <div class="quote-table">
+              <div class="quote-header">
+                <span>Description</span>
+                <span>Qty</span>
+                <span>Unit Price / month</span>
+                <span>Price</span>
+              </div>
+              <div class="quote-row">
+                <span>
+                  <select class="form-input" [(ngModel)]="quotation.itemDescription">
+                    <option value="" disabled selected>Select vehicle</option>
+                    <option *ngFor="let v of myVehicles" [ngValue]="v.make + ' ' + v.model + ' (' + v.year + ')'">
+                      {{ v.make }} {{ v.model }} ({{ v.year }}) - ${{ v.pricePerMonth }}/month
+                    </option>
+                  </select>
+                </span>
+                <span>
+                  <input type="number" class="form-input"
+                         [(ngModel)]="quotation.itemQuantity" placeholder="Qty" />
+                </span>
+                <span>
+                  <input type="number" class="form-input"
+                         [(ngModel)]="quotation.itemUnitPrice" placeholder="Unit price" />
+                </span>
+                <span class="quote-price">
+                  {{ (quotation.itemQuantity || 0) * (quotation.itemUnitPrice || 0) | number:'1.2-2' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Totals -->
+            <div class="quote-totals">
+              <div class="totals-row">
+                <span>Subtotal</span>
+                <span>
+                  {{ (quotation.itemQuantity || 0) * (quotation.itemUnitPrice || 0) | number:'1.2-2' }}
+                </span>
+              </div>
+              <div class="totals-row">
+                <span>
+                  Tax (
+                  <input type="number" class="tax-input" min="0"
+                         [(ngModel)]="quotation.taxPercent" />
+                  %)
+                </span>
+                <span>
+                  {{ ((quotation.itemQuantity || 0) * (quotation.itemUnitPrice || 0) * (quotation.taxPercent || 0) / 100) | number:'1.2-2' }}
+                </span>
+              </div>
+              <div class="totals-row totals-total">
+                <span>Total Amount</span>
+                <span>
+                  {{ ((quotation.itemQuantity || 0) * (quotation.itemUnitPrice || 0) * (1 + quotation.taxPercent / 100)) | number:'1.2-2' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <div class="form-group">
-            <label>Your Response Message:</label>
-            <textarea [(ngModel)]="vendorResponse" 
-                      class="form-input" 
-                      rows="4"
-                      placeholder="Add your response message (optional)..."></textarea>
+            <label>Terms and Conditions</label>
+            <textarea [(ngModel)]="quotation.terms"
+                      class="form-input"
+                      rows="5"
+                      placeholder="Maintenance, insurance, special conditions..."></textarea>
           </div>
           
           <div class="button-group">
-            <button class="btn-approve" (click)="approveRequest()" [disabled]="isProcessing">
+            <button class="btn-approve" (click)="submitQuotation()" [disabled]="isProcessing">
               <i [class]="isProcessing ? 'fas fa-spinner fa-spin' : 'fas fa-check'"></i>
-              {{ isProcessing ? 'Processing...' : 'Approve Request' }}
+              {{ isProcessing ? 'Processing...' : 'Submit Quotation' }}
             </button>
-            <button class="btn-reject" (click)="rejectRequest()" [disabled]="isProcessing">
-              <i [class]="isProcessing ? 'fas fa-spinner fa-spin' : 'fas fa-times'"></i>
-              {{ isProcessing ? 'Processing...' : 'Reject Request' }}
+            <button class="btn-reject" type="button" (click)="closeResponseForm()" [disabled]="isProcessing">
+              <i class="fas fa-undo"></i>
+              Reset
             </button>
           </div>
         </div>

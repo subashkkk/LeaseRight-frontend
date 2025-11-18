@@ -20,6 +20,15 @@ export class Login implements OnInit {
   successMessage = '';
   errorMessage = '';
 
+  // Forgot password flow
+  forgotMode = false;
+  forgotStep: 'email' | 'otp' | 'reset' | 'success' = 'email';
+  forgotEmailForm!: FormGroup;
+  forgotOtpForm!: FormGroup;
+  resetPasswordForm!: FormGroup;
+  forgotSuccessMessage = '';
+  forgotErrorMessage = '';
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
@@ -54,6 +63,20 @@ export class Login implements OnInit {
       rememberMe: [false]
     });
 
+    // Forgot password forms
+    this.forgotEmailForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]]
+    });
+
+    this.forgotOtpForm = this.fb.group({
+      otp: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(6)]]
+    });
+
+    this.resetPasswordForm = this.fb.group({
+      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required, Validators.minLength(6)]]
+    });
+
     // Load saved email if "Remember Me" was checked
     const savedEmail = localStorage.getItem('savedEmail');
     if (savedEmail) {
@@ -67,6 +90,22 @@ export class Login implements OnInit {
 
   get password() {
     return this.loginForm.get('password');
+  }
+
+  get forgotEmail() {
+    return this.forgotEmailForm.get('email');
+  }
+
+  get forgotOtp() {
+    return this.forgotOtpForm.get('otp');
+  }
+
+  get newPassword() {
+    return this.resetPasswordForm.get('newPassword');
+  }
+
+  get confirmPassword() {
+    return this.resetPasswordForm.get('confirmPassword');
   }
 
   togglePasswordVisibility(): void {
@@ -139,6 +178,79 @@ export class Login implements OnInit {
   }
 
   navigateToForgotPassword(): void {
-    this.router.navigate(['/auth/forgot-password']);
+    // Kept for backward compatibility if a separate route is added later
+    this.startForgotPassword();
+  }
+
+  // ===== Forgot Password Flow (inline UI) =====
+
+  startForgotPassword(): void {
+    this.forgotMode = true;
+    this.forgotStep = 'email';
+    this.forgotSuccessMessage = '';
+    this.forgotErrorMessage = '';
+    // Pre-fill email if user already typed it in login form
+    const currentEmail = this.loginForm.get('email')?.value;
+    if (currentEmail) {
+      this.forgotEmailForm.patchValue({ email: currentEmail });
+    }
+  }
+
+  cancelForgotPassword(): void {
+    this.forgotMode = false;
+    this.forgotStep = 'email';
+    this.forgotSuccessMessage = '';
+    this.forgotErrorMessage = '';
+  }
+
+  submitForgotEmail(): void {
+    if (this.forgotEmailForm.invalid) {
+      this.forgotErrorMessage = 'Please enter a valid email address';
+      return;
+    }
+    this.forgotErrorMessage = '';
+    this.forgotSuccessMessage = 'OTP has been sent to your email.';
+    // In a real app, call backend API to send OTP here
+    this.forgotStep = 'otp';
+  }
+
+  submitForgotOtp(): void {
+    if (this.forgotOtpForm.invalid) {
+      this.forgotErrorMessage = 'Please enter the OTP sent to your email';
+      return;
+    }
+    this.forgotErrorMessage = '';
+    this.forgotSuccessMessage = 'OTP verified. Please set your new password.';
+    // In a real app, verify OTP with backend here
+    this.forgotStep = 'reset';
+  }
+
+  submitNewPassword(): void {
+    if (this.resetPasswordForm.invalid) {
+      this.forgotErrorMessage = 'Please enter a valid password in both fields';
+      return;
+    }
+
+    const newPwd = this.resetPasswordForm.value.newPassword;
+    const confirmPwd = this.resetPasswordForm.value.confirmPassword;
+
+    if (newPwd !== confirmPwd) {
+      this.forgotErrorMessage = 'Passwords do not match';
+      return;
+    }
+
+    this.forgotErrorMessage = '';
+    this.forgotSuccessMessage = 'Password changed successfully. Redirecting to login...';
+    this.forgotStep = 'success';
+
+    // In a real app, call backend API to update password here
+
+    setTimeout(() => {
+      this.forgotMode = false;
+      this.forgotStep = 'email';
+      this.forgotSuccessMessage = '';
+      this.resetPasswordForm.reset();
+      this.forgotOtpForm.reset();
+    }, 2000);
   }
 }

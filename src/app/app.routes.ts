@@ -10,6 +10,10 @@ export const routes: Routes = [
     loadChildren: () => import('./Auth/auth.module').then(m => m.AuthModule)
   },
   {
+    path: 'admin/dashboard',
+    loadComponent: () => import('./Home/admin-dashboard/admin-dashboard').then(m => m.AdminDashboard)
+  },
+  {
     path: 'home/vendor-dashboard',
     loadComponent: () => import('./Home/vendor-dashboard/vendor-dashboard').then(m => m.VendorDashboard)
   },

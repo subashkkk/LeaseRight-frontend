@@ -428,9 +428,10 @@
 .modal-content {
   background: #ffffff;
   border-radius: 12px;
-  width: 90%;
-  max-width: 600px;
+  width: 80%;
+  max-width: 1000px;
   max-height: 90vh;
+  margin: 40px auto;
   overflow-y: auto;
   animation: slideUp 0.3s ease;
 }
@@ -498,6 +499,126 @@
   margin: 6px 0;
   font-size: 14px;
   color: #495057;
+}
+
+.quote-header-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1.5fr;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.quote-header-right {
+  text-align: right;
+}
+
+.header-input {
+  display: inline-block;
+  max-width: 260px;
+  margin-left: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  font-size: 13px;
+}
+
+.inline-error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+/* Quotation table inside respond view */
+
+.quote-table {
+  margin-top: 12px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+}
+
+.quote-header,
+.quote-row {
+  display: grid;
+  grid-template-columns: 2.5fr 0.8fr 1.3fr 1.2fr;
+}
+
+.quote-header {
+  background: #f5f5f5;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #757575;
+}
+
+.quote-header span {
+  padding-right: 8px;
+}
+
+.quote-row {
+  padding: 10px 14px;
+  gap: 10px;
+  align-items: center;
+  background: #ffffff;
+}
+
+.quote-row span {
+  display: flex;
+  align-items: center;
+}
+
+.quote-row .form-input {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.quote-price {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a1a1a;
+}
+
+.quote-totals {
+  margin-top: 16px;
+  border-top: 1px solid #e9ecef;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.totals-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 40px;
+  font-size: 14px;
+  color: #495057;
+}
+
+.totals-row span:last-child {
+  min-width: 120px;
+  text-align: right;
+  font-weight: 600;
+}
+
+.totals-total span:first-child {
+  font-weight: 700;
+}
+
+.tax-input {
+  width: 70px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  margin: 0 4px;
 }
 
 .form-group {
