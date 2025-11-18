@@ -4,13 +4,14 @@ import { Observable, of, catchError } from 'rxjs';
 import { API_CONFIG, getApiUrl } from '../config/api.config';
 
 export interface CompanyData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  companyName: string;
+  name: string;
+  mail: string;
   password: string;
   role: string;
-  registeredAt: string;
+  // Optional metadata fields for future use
+  contactNo?: string;
+  gstNo?: string;
+  registeredAt?: string;
 }
 
 @Injectable({
@@ -18,7 +19,7 @@ export interface CompanyData {
 })
 export class CompanyDataService {
   // Toggle between backend API and LocalStorage
-  private USE_BACKEND_API = false; // Set to true to use your backend
+  private USE_BACKEND_API = true; // Set to true to use your backend
   
   private readonly STORAGE_KEY = 'company_registrations';
 
@@ -103,7 +104,7 @@ export class CompanyDataService {
   getCompanyByEmail(email: string): CompanyData | null {
     // === CURRENT IMPLEMENTATION (LocalStorage) ===
     const companies = this.getAllCompanies();
-    return companies.find(c => c.email === email) || null;
+    return companies.find(c => c.mail === email) || null;
 
     // === FUTURE IMPLEMENTATION (Backend API) ===
     // When backend is ready, replace above code with:

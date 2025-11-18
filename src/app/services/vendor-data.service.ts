@@ -4,10 +4,16 @@ import { Observable, of, catchError } from 'rxjs';
 import { API_CONFIG, getApiUrl } from '../config/api.config';
 
 export interface VendorData {
-  firstName: string;
-  lastName: string;
-  email: string;
+  // Optional personal name fields for backward compatibility
+  firstName?: string;
+  lastName?: string;
+
+  // Core vendor/company details
   companyName: string;
+  contactNumber: string;
+  email: string;
+  gstNumber: string;
+  panNumber: string;
   password: string;
   role: string;
   registeredAt: string;

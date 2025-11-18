@@ -1,0 +1,83 @@
+<div class="signup-container">
+  <!-- Left Side - Branding Section -->
+  <div class="signup-branding">
+    <div class="branding-content">
+      <div class="logo-section">
+        <img src="assets/lr.jpeg" alt="LeaseRight Logo" class="logo">
+        <h1 class="brand-name">OTP Verification</h1>
+        <p class="brand-tagline">Secure your account with one-time password verification</p>
+      </div>
+
+      <div class="benefits-section">
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h3>Enhanced Security</h3>
+          <p>We verify your email to keep your account safe.</p>
+        </div>
+
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <i class="fas fa-envelope-open-text"></i>
+          </div>
+          <h3>Email Based Access</h3>
+          <p>Access your account using verified email credentials.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side - OTP Form Section -->
+  <div class="signup-form-section">
+    <div class="form-wrapper">
+      <div class="form-header">
+        <h2>Verify your email</h2>
+        <p *ngIf="email">We have sent a one-time password (OTP) to <strong>{{ email }}</strong>.</p>
+        <p *ngIf="!email">Enter the OTP sent to your email to complete registration.</p>
+      </div>
+
+      <!-- Success Message -->
+      <div class="alert alert-success" *ngIf="message">
+        <span>{{ message }}</span>
+      </div>
+
+      <!-- Error Message -->
+      <div class="alert alert-error" *ngIf="error">
+        <span>{{ error }}</span>
+      </div>
+
+      <!-- OTP Form -->
+      <form class="signup-form" (ngSubmit)="onVerify()">
+        <div class="form-group">
+          <label for="otp" class="form-label">
+            <i class="fas fa-key"></i>
+            Enter OTP
+          </label>
+          <input
+            id="otp"
+            type="text"
+            maxlength="6"
+            class="form-input"
+            [(ngModel)]="otpInput"
+            name="otp"
+            placeholder="6-digit OTP"
+          />
+        </div>
+
+        <!-- Verify Button -->
+        <button type="submit" class="btn-submit" [disabled]="isVerifying">
+          <span *ngIf="!isVerifying">Verify</span>
+          <span *ngIf="isVerifying">Verifying...</span>
+        </button>
+      </form>
+
+      <div class="form-footer">
+        <p>
+          Didn't receive the code?
+          <a href="javascript:void(0)" (click)="resendOtp()">Resend OTP (test)</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

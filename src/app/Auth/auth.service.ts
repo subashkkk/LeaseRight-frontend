@@ -107,18 +107,22 @@ export class AuthService {
     );
 
     if (vendor) {
+      const userName = vendor.firstName && vendor.lastName
+        ? `${vendor.firstName} ${vendor.lastName}`
+        : vendor.companyName;
+
       const response = {
         success: true,
         message: 'Login successful',
         token: this.generateToken(vendor.email),
         user: {
           email: vendor.email,
-          firstName: vendor.firstName,
-          lastName: vendor.lastName,
+          firstName: vendor.firstName || vendor.companyName,
+          lastName: vendor.lastName || '',
           companyName: vendor.companyName
         },
         userRole: 'vendor',
-        userName: `${vendor.firstName} ${vendor.lastName}`
+        userName
       };
       
       console.log('✅ LocalStorage vendor login successful:', vendor.email);

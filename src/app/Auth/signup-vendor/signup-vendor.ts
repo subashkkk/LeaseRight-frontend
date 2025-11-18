@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { VendorDataService } from '../../services/vendor-data.service';
+import { OtpService } from '../../services/otp.service';
 
 @Component({
   selector: 'app-signup-vendor',
@@ -22,7 +23,8 @@ export class SignupVendor implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private vendorDataService: VendorDataService
+    private vendorDataService: VendorDataService,
+    private otpService: OtpService
   ) {}
 
   ngOnInit(): void {
@@ -31,10 +33,11 @@ export class SignupVendor implements OnInit {
 
   initializeForm(): void {
     this.vendorSignupForm = this.fb.group({
-      firstName: ['', [Validators.required, Validators.minLength(2)]],
-      lastName: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
-      companyName: ['', [Validators.required, Validators.minLength(3)]],
+      name: ['', [Validators.required, Validators.minLength(2)]],
+      contactNo: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
+      mail: ['', [Validators.required, Validators.email]],
+      gstNo: ['', [Validators.required, Validators.pattern('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$')]],
+      panNo: ['', [Validators.required, Validators.pattern('^[A-Z]{5}[0-9]{4}[A-Z]{1}$')]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required]]
     }, { validators: this.passwordMatchValidator });
@@ -53,10 +56,11 @@ export class SignupVendor implements OnInit {
   }
 
   // Getters for form controls
-  get firstName() { return this.vendorSignupForm.get('firstName'); }
-  get lastName() { return this.vendorSignupForm.get('lastName'); }
-  get email() { return this.vendorSignupForm.get('email'); }
-  get companyName() { return this.vendorSignupForm.get('companyName'); }
+  get name() { return this.vendorSignupForm.get('name'); }
+  get contactNo() { return this.vendorSignupForm.get('contactNo'); }
+  get mail() { return this.vendorSignupForm.get('mail'); }
+  get gstNo() { return this.vendorSignupForm.get('gstNo'); }
+  get panNo() { return this.vendorSignupForm.get('panNo'); }
   get password() { return this.vendorSignupForm.get('password'); }
   get confirmPassword() { return this.vendorSignupForm.get('confirmPassword'); }
 
@@ -73,49 +77,43 @@ export class SignupVendor implements OnInit {
       this.isLoading = true;
       this.errorMessage = '';
 
-      const email = this.vendorSignupForm.value.email;
+      const mail = this.vendorSignupForm.value.mail;
 
-      // Check if email already exists
-      if (this.vendorDataService.isEmailRegistered(email)) {
-        this.isLoading = false;
-        this.errorMessage = 'This email is already registered. Please use a different email.';
-        return;
-      }
-
-      // Create vendor data object (exclude confirmPassword)
+      // Create vendor data object matching backend UserEntity
       const vendorData = {
-        firstName: this.vendorSignupForm.value.firstName,
-        lastName: this.vendorSignupForm.value.lastName,
-        email: this.vendorSignupForm.value.email,
-        companyName: this.vendorSignupForm.value.companyName,
+        name: this.vendorSignupForm.value.name,
+        contactNo: this.vendorSignupForm.value.contactNo,
+        mail: this.vendorSignupForm.value.mail,
+        gstNo: this.vendorSignupForm.value.gstNo,
+        panNo: this.vendorSignupForm.value.panNo,
         password: this.vendorSignupForm.value.password,
-        role: 'vendor',
-        registeredAt: new Date().toISOString()
+        role: 'vendor'
       };
 
-      // Save data using service
-      this.vendorDataService.saveVendorData(vendorData)
-        .then(response => {
-          this.isLoading = false;
-          this.successMessage = 'Vendor registration successful! Data saved to database.';
-
-          // Log success
-          console.log('📊 Total vendors registered:', this.vendorDataService.getTotalVendors());
-          console.log('📋 Vendor data stored in LocalStorage');
-
-          // Reset form
-          this.vendorSignupForm.reset();
-
-          // Redirect to login after 3 seconds
-          setTimeout(() => {
-            this.router.navigate(['/auth/login']);
-          }, 3000);
-        })
-        .catch(error => {
-          this.isLoading = false;
-          this.errorMessage = 'Registration failed. Please try again.';
-          console.error('❌ Registration error:', error);
-        });
+      // Call backend signup endpoint (validates GST/PAN and sends OTP)
+      this.otpService.startOtpFlow({
+        role: 'vendor',
+        email: mail,
+        payload: vendorData
+      }).then(() => {
+        this.isLoading = false;
+        this.vendorSignupForm.disable();
+        this.router.navigate(['/auth/verify-otp'], { queryParams: { email: mail, role: 'vendor' } });
+      }).catch(error => {
+        this.isLoading = false;
+        console.error('Signup error:', error);
+        
+        // Extract meaningful error message
+        if (error.error && typeof error.error === 'string') {
+          this.errorMessage = error.error;
+        } else if (error.message) {
+          this.errorMessage = error.message;
+        } else if (error.status === 0) {
+          this.errorMessage = 'Cannot connect to server. Please ensure backend is running on port 8080.';
+        } else {
+          this.errorMessage = 'Signup failed. Please check your details and try again.';
+        }
+      });
     } else {
       this.errorMessage = 'Please fill all required fields correctly.';
       this.markFormGroupTouched(this.vendorSignupForm);
