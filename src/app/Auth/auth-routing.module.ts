@@ -19,6 +19,10 @@ const routes: Routes = [
     loadChildren: () => import('./signup-company/signup-company.module').then(m => m.SignupCompanyModule)
   },
   {
+    path: 'verify-otp',
+    loadComponent: () => import('./verify-otp/verify-otp').then(m => m.VerifyOtp)
+  },
+  {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full'

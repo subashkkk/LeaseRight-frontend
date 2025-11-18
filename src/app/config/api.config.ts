@@ -10,10 +10,17 @@ export const API_CONFIG = {
   // Auth Endpoints
   AUTH: {
     LOGIN: '/user/login',
-    SIGNUP: '/user/addNewUser',
+    SIGNUP: '/users/addNewUser',
     LOGOUT: '/user/logout',
     REFRESH_TOKEN: '/user/refresh-token',
     VERIFY_TOKEN: '/user/verify-token'
+  },
+
+  // OTP Endpoints - User Registration with OTP
+  OTP: {
+    SIGNUP: '/signup',           // POST - Create user, validate GST, send OTP
+    VERIFY: '/verify_OTP',       // POST - Verify OTP and activate account
+    RESEND: '/resend-otp'        // GET - Resend OTP to email
   },
   
   // Vendor Endpoints

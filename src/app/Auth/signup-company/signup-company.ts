@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CompanyDataService } from '../../services/company-data.service';
+import { OtpService } from '../../services/otp.service';
 
 @Component({
   selector: 'app-signup-company',
@@ -22,7 +23,8 @@ export class SignupCompany implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private companyDataService: CompanyDataService
+    private companyDataService: CompanyDataService,
+    private otpService: OtpService
   ) {}
 
   ngOnInit(): void {
@@ -31,10 +33,10 @@ export class SignupCompany implements OnInit {
 
   initializeForm(): void {
     this.companySignupForm = this.fb.group({
-      firstName: ['', [Validators.required, Validators.minLength(2)]],
-      lastName: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
-      companyName: ['', [Validators.required, Validators.minLength(3)]],
+      name: ['', [Validators.required, Validators.minLength(2)]],
+      contactNo: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
+      mail: ['', [Validators.required, Validators.email]],
+      gstNo: ['', [Validators.required, Validators.pattern('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$')]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required]]
     }, { validators: this.passwordMatchValidator });
@@ -53,10 +55,10 @@ export class SignupCompany implements OnInit {
   }
 
   // Getters for form controls
-  get firstName() { return this.companySignupForm.get('firstName'); }
-  get lastName() { return this.companySignupForm.get('lastName'); }
-  get email() { return this.companySignupForm.get('email'); }
-  get companyName() { return this.companySignupForm.get('companyName'); }
+  get name() { return this.companySignupForm.get('name'); }
+  get contactNo() { return this.companySignupForm.get('contactNo'); }
+  get mail() { return this.companySignupForm.get('mail'); }
+  get gstNo() { return this.companySignupForm.get('gstNo'); }
   get password() { return this.companySignupForm.get('password'); }
   get confirmPassword() { return this.companySignupForm.get('confirmPassword'); }
 
@@ -73,49 +75,42 @@ export class SignupCompany implements OnInit {
       this.isLoading = true;
       this.errorMessage = '';
 
-      const email = this.companySignupForm.value.email;
+      const mail = this.companySignupForm.value.mail;
 
-      // Check if email already exists
-      if (this.companyDataService.isEmailRegistered(email)) {
-        this.isLoading = false;
-        this.errorMessage = 'This email is already registered. Please use a different email.';
-        return;
-      }
-
-      // Create company data object (exclude confirmPassword)
+      // Create company data object matching backend UserEntity
       const companyData = {
-        firstName: this.companySignupForm.value.firstName,
-        lastName: this.companySignupForm.value.lastName,
-        email: this.companySignupForm.value.email,
-        companyName: this.companySignupForm.value.companyName,
+        name: this.companySignupForm.value.name,
+        mail: this.companySignupForm.value.mail,
+        contactNo: this.companySignupForm.value.contactNo,
+        gstNo: this.companySignupForm.value.gstNo,
         password: this.companySignupForm.value.password,
-        role: 'company',
-        registeredAt: new Date().toISOString()
+        role: 'company'
       };
 
-      // Save data using service
-      this.companyDataService.saveCompanyData(companyData)
-        .then(response => {
-          this.isLoading = false;
-          this.successMessage = 'Company registration successful! Data saved to database.';
-
-          // Log success
-          console.log('📊 Total companies registered:', this.companyDataService.getTotalCompanies());
-          console.log('📋 Company data stored in LocalStorage');
-
-          // Reset form
-          this.companySignupForm.reset();
-
-          // Redirect to login after 3 seconds
-          setTimeout(() => {
-            this.router.navigate(['/auth/login']);
-          }, 3000);
-        })
-        .catch(error => {
-          this.isLoading = false;
-          this.errorMessage = 'Registration failed. Please try again.';
-          console.error('❌ Registration error:', error);
-        });
+      // Call backend signup endpoint (validates GST and sends OTP)
+      this.otpService.startOtpFlow({
+        role: 'company',
+        email: mail,
+        payload: companyData
+      }).then(() => {
+        this.isLoading = false;
+        this.companySignupForm.disable();
+        this.router.navigate(['/auth/verify-otp'], { queryParams: { email: mail, role: 'company' } });
+      }).catch(error => {
+        this.isLoading = false;
+        console.error('Signup error:', error);
+        
+        // Extract meaningful error message
+        if (error.error && typeof error.error === 'string') {
+          this.errorMessage = error.error;
+        } else if (error.message) {
+          this.errorMessage = error.message;
+        } else if (error.status === 0) {
+          this.errorMessage = 'Cannot connect to server. Please ensure backend is running on port 8080.';
+        } else {
+          this.errorMessage = 'Signup failed. Please check your details and try again.';
+        }
+      });
     } else {
       this.errorMessage = 'Please fill all required fields correctly.';
       this.markFormGroupTouched(this.companySignupForm);
