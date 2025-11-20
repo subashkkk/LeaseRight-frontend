@@ -87,38 +87,30 @@
         <div class="request-card" *ngFor="let request of pendingRequests">
           <div class="request-header">
             <div>
-              <h4>{{ request.vehicleType }} - {{ request.quantity }} Vehicle(s)</h4>
+              <h4>{{ request.vehicleType }}<span *ngIf="request.preferredModel"> - {{ request.preferredModel }}</span></h4>
               <p class="company-name">{{ request.companyName }}</p>
             </div>
             <span class="request-date">{{ request.createdAt | date:'short' }}</span>
           </div>
           
           <div class="request-details">
-            <div class="detail-item">
-              <i class="fas fa-user"></i>
-              <span>Contact: {{ request.contactPerson }}</span>
-            </div>
-            <div class="detail-item">
+            <div class="detail-item" *ngIf="request.companyEmail">
               <i class="fas fa-envelope"></i>
               <span>{{ request.companyEmail }}</span>
             </div>
             <div class="detail-item">
               <i class="fas fa-calendar"></i>
-              <span>Duration: {{ request.leaseDuration }} months</span>
+              <span>Duration: {{ request.leaseDuration }} {{ request.leaseDuration === 1 ? 'month' : 'months' }}</span>
             </div>
             <div class="detail-item">
-              <i class="fas fa-calendar-start"></i>
-              <span>Start: {{ request.startDate | date:'mediumDate' }}</span>
-            </div>
-            <div class="detail-item">
-              <i class="fas fa-dollar-sign"></i>
-              <span>Budget: ${{ request.budget }}/month</span>
+              <i class="fas fa-rupee-sign"></i>
+              <span>Budget: ₹{{ request.minBudget | number }} - ₹{{ request.maxBudget | number }}/month</span>
             </div>
           </div>
           
-          <div class="request-description">
+          <div class="request-description" *ngIf="request.additionalRequirements">
             <strong>Requirements:</strong>
-            <p>{{ request.description }}</p>
+            <p>{{ request.additionalRequirements }}</p>
           </div>
           
           <button class="btn-respond" (click)="respondToRequest(request)">
@@ -158,7 +150,8 @@
                 <p><strong>Company Email:</strong> {{ selectedRequest.companyEmail }}</p>
                 <p><strong>Company GST:</strong></p>
                 <p><strong>Request ID:</strong> {{ selectedRequest.id }}</p>
-                <p><strong>Requested Vehicle:</strong> {{ selectedRequest.vehicleType }} - {{ selectedRequest.quantity }} Vehicle(s)</p>
+                <p><strong>Requested Vehicle:</strong> {{ selectedRequest.vehicleType }}<span *ngIf="selectedRequest.preferredModel"> - {{ selectedRequest.preferredModel }}</span></p>
+                <p><strong>Budget Range:</strong> ₹{{ selectedRequest.minBudget | number }} - ₹{{ selectedRequest.maxBudget | number }}/month</p>
               </div>
               <div class="quote-header-right">
                 <p><strong>Vendor Company:</strong> {{ companyName }}</p>

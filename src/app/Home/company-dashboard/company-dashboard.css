@@ -363,6 +363,14 @@
   font-family: inherit;
 }
 
+.lease-form .form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
+
 .btn-submit {
   background: #2962ff;
   color: #ffffff;

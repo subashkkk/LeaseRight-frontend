@@ -38,7 +38,7 @@ export class CompanyDataService {
     return new Promise((resolve, reject) => {
       if (this.USE_BACKEND_API) {
         // Backend API implementation
-        const url = getApiUrl(API_CONFIG.COMPANY.REGISTER);
+        const url = getApiUrl(API_CONFIG.AUTH.SIGNUP);
         console.log(' Saving company via backend API:', url);
         
         this.http.post(url, companyData).subscribe({

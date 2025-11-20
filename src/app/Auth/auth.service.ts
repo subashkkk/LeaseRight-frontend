@@ -9,7 +9,8 @@ import { API_CONFIG, getApiUrl } from '../config/api.config';
   providedIn: 'root'
 })
 export class AuthService {
-  // Toggle between backend API and LocalStorage
+  // Toggle between backend API and LocalStorage  
+  // Keep false: Backend login endpoint not implemented yet, using test credentials
   private USE_BACKEND_API = false; // Set to true to use your backend
   
   private readonly VENDOR_STORAGE_KEY = 'vendor_registrations';

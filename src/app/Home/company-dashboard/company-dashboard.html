@@ -116,48 +116,55 @@
       <form [formGroup]="requestForm" (ngSubmit)="submitLeaseRequest()" class="lease-form">
         <div class="form-row">
           <div class="form-group">
-            <label>Vehicle Type</label>
+            <label>Vehicle Type *</label>
             <select formControlName="vehicleType" class="form-input">
-              <option value="">Select Type</option>
-              <option value="Sedan">Sedan</option>
+              <option value="">Select Vehicle Type</option>
               <option value="SUV">SUV</option>
-              <option value="Truck">Truck</option>
-              <option value="Van">Van</option>
-              <option value="Electric">Electric</option>
-              <option value="Luxury">Luxury</option>
+              <option value="SEDAN">Sedan</option>
+              <option value="HATCHBACK">Hatchback</option>
+              <option value="CUV">CUV (Crossover)</option>
+              <option value="MUV">MUV (Multi Utility Vehicle)</option>
+              <option value="PICKUP">Pickup Truck</option>
+              <option value="SPORTS">Sports Car</option>
+              <option value="LUXURY">Luxury</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label>Quantity</label>
-            <input type="number" formControlName="quantity" class="form-input" min="1">
+            <label>Preferred Model (Optional)</label>
+            <input type="text" formControlName="preferredModel" class="form-input" 
+                   placeholder="e.g., Toyota Camry">
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Lease Duration (months)</label>
-            <input type="number" formControlName="leaseDuration" class="form-input" min="1">
+            <label>Minimum Budget (₹/month) *</label>
+            <input type="number" formControlName="minBudget" class="form-input" 
+                   min="0" placeholder="₹ 10,000">
           </div>
 
           <div class="form-group">
-            <label>Start Date</label>
-            <input type="date" formControlName="startDate" class="form-input">
+            <label>Maximum Budget (₹/month) *</label>
+            <input type="number" formControlName="maxBudget" class="form-input" 
+                   min="0" placeholder="₹ 50,000">
           </div>
         </div>
 
         <div class="form-group">
-          <label>Budget (per month)</label>
-          <input type="number" formControlName="budget" class="form-input" placeholder="$">
+          <label>Lease Duration (in months) *</label>
+          <input type="number" formControlName="leaseDuration" class="form-input" 
+                 min="1" placeholder="12">
+          <small class="form-hint">Duration will be converted to years (e.g., 12 months = 1 year)</small>
         </div>
 
         <div class="form-group">
-          <label>Description / Requirements</label>
-          <textarea formControlName="description" class="form-input" rows="4" 
-                    placeholder="Describe your specific requirements..."></textarea>
+          <label>Additional Requirements (Optional)</label>
+          <textarea formControlName="additionalRequirements" class="form-input" rows="4" 
+                    placeholder="Any specific features, colors, or requirements..."></textarea>
         </div>
 
-        <button type="submit" class="btn-submit" [disabled]="isSubmitting">
+        <button type="submit" class="btn-submit" [disabled]="isSubmitting || requestForm.invalid">
           <i [class]="isSubmitting ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
           {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
         </button>
@@ -207,7 +214,7 @@
         <div class="request-card" *ngFor="let request of myRequests">
           <div class="request-header">
             <div class="request-title">
-              <h4>{{ request.vehicleType }} - {{ request.quantity }} Vehicle(s)</h4>
+              <h4>{{ request.vehicleType }}<span *ngIf="request.preferredModel"> - {{ request.preferredModel }}</span></h4>
               <span [class]="'status-badge ' + getStatusClass(request.status)">
                 <i [class]="'fas ' + getStatusIcon(request.status)"></i>
                 {{ request.status | titlecase }}
@@ -219,20 +226,17 @@
           <div class="request-details">
             <div class="detail-item">
               <i class="fas fa-calendar"></i>
-              <span>Duration: {{ request.leaseDuration }} months</span>
+              <span>Duration: {{ request.leaseDuration }} {{ request.leaseDuration === 1 ? 'month' : 'months' }}</span>
             </div>
             <div class="detail-item">
-              <i class="fas fa-calendar-start"></i>
-              <span>Start: {{ request.startDate | date:'mediumDate' }}</span>
-            </div>
-            <div class="detail-item">
-              <i class="fas fa-dollar-sign"></i>
-              <span>Budget: ${{ request.budget }}/month</span>
+              <i class="fas fa-rupee-sign"></i>
+              <span>Budget: ₹{{ request.minBudget | number }} - ₹{{ request.maxBudget | number }}/month</span>
             </div>
           </div>
           
-          <div class="request-description">
-            <p>{{ request.description }}</p>
+          <div class="request-description" *ngIf="request.additionalRequirements">
+            <strong>Requirements:</strong>
+            <p>{{ request.additionalRequirements }}</p>
           </div>
           
           <div class="vendor-response" *ngIf="request.vendorResponse">

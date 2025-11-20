@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import './dev-helpers'; // Load dev helpers for browser console
 
 @Component({
   selector: 'app-root',

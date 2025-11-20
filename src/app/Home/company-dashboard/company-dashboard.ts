@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../Auth/auth.service';
-import { LeaseRequestService, LeaseRequest, Vehicle } from '../../services/lease-request.service';
+import { LeaseRequestService, LeaseRequest, Vehicle, VehicleType } from '../../services/lease-request.service';
 import { QuotationsComponent } from '../../company-dashboard/quotations/quotations';
 
 @Component({
@@ -17,6 +17,7 @@ export class CompanyDashboard implements OnInit {
   userName: string = '';
   userEmail: string = '';
   companyName: string = '';
+  companyId: number = 0;  // Backend companyId
   
   // Statistics
   stats: any = {
@@ -68,6 +69,8 @@ export class CompanyDashboard implements OnInit {
     this.userName = this.authService.getUserName() || 'Company User';
     this.userEmail = user?.email || '';
     this.companyName = user?.companyName || '';
+    // For now, use a mock companyId (1). In production, this should come from backend after login
+    this.companyId = 1;
 
     // Initialize form
     this.initializeRequestForm();
@@ -77,25 +80,49 @@ export class CompanyDashboard implements OnInit {
   }
 
   initializeRequestForm(): void {
+    // Form matching backend LeaseRequestDTO fields
     this.requestForm = this.fb.group({
       vehicleType: ['', Validators.required],
-      quantity: [1, [Validators.required, Validators.min(1)]],
-      leaseDuration: [12, [Validators.required, Validators.min(1)]],
-      startDate: ['', Validators.required],
-      budget: ['', [Validators.required, Validators.min(0)]],
-      description: ['', Validators.required]
+      preferredModel: [''],  // Optional in backend
+      leaseDuration: [12, [Validators.required, Validators.min(1)]],  // In months/years
+      minBudget: ['', [Validators.required, Validators.min(0)]],
+      maxBudget: ['', [Validators.required, Validators.min(0)]],
+      additionalRequirements: ['']  // Optional
     });
   }
 
-  loadDashboardData(): void {
-    // Load statistics
-    this.stats = this.leaseService.getCompanyStats(this.userEmail);
+  async loadDashboardData(): Promise<void> {
+    try {
+      // TEMPORARY: Show all requests since companyId is not associated yet
+      // TODO: Filter by actual companyId after login integration
+      console.log('🔄 Loading all requests (companyId not associated yet)...');
+      
+      const allRequests = await this.leaseService.getAllLeaseRequests();
+      this.myRequests = allRequests;
+      
+      // Calculate stats from all requests
+      this.stats = {
+        total: allRequests.length,
+        pending: allRequests.filter(r => !r.status || r.status === 'pending').length,
+        approved: allRequests.filter(r => r.status === 'approved').length,
+        rejected: allRequests.filter(r => r.status === 'rejected').length
+      };
 
-    // Load my requests
-    this.myRequests = this.leaseService.getRequestsByCompany(this.userEmail);
-
-    // Load available vehicles
-    this.availableVehicles = this.leaseService.getAvailableVehicles();
+      // Load available vehicles (still using localStorage for now)
+      this.availableVehicles = this.leaseService.getAvailableVehicles();
+      
+      console.log('✅ Dashboard data loaded:', {
+        stats: this.stats,
+        requests: this.myRequests.length,
+        vehicles: this.availableVehicles.length,
+        requestDetails: this.myRequests
+      });
+    } catch (error) {
+      console.error('❌ Error loading dashboard data:', error);
+      this.stats = { total: 0, pending: 0, approved: 0, rejected: 0 };
+      this.myRequests = [];
+      this.availableVehicles = [];
+    }
   }
 
   toggleRequestForm(): void {
@@ -105,7 +132,6 @@ export class CompanyDashboard implements OnInit {
     this.errorMessage = '';
     if (this.showRequestForm) {
       this.requestForm.reset({
-        quantity: 1,
         leaseDuration: 12
       });
     }
@@ -132,41 +158,55 @@ export class CompanyDashboard implements OnInit {
       return;
     }
 
+    // Validate budget range
+    const minBudget = this.requestForm.value.minBudget;
+    const maxBudget = this.requestForm.value.maxBudget;
+    
+    if (minBudget > maxBudget) {
+      this.errorMessage = 'Minimum budget cannot be greater than maximum budget';
+      return;
+    }
+
     this.isSubmitting = true;
     this.errorMessage = '';
 
-    const requestData = {
-      companyEmail: this.userEmail,
-      companyName: this.companyName,
-      contactPerson: this.userName,
-      vehicleType: this.requestForm.value.vehicleType,
-      quantity: this.requestForm.value.quantity,
+    // Prepare data matching backend LeaseRequestDTO
+    const requestData: Omit<LeaseRequest, 'id' | 'status' | 'createdAt'> = {
+      vehicleType: this.requestForm.value.vehicleType as VehicleType,
+      preferredModel: this.requestForm.value.preferredModel || undefined,
       leaseDuration: this.requestForm.value.leaseDuration,
-      startDate: this.requestForm.value.startDate,
-      budget: this.requestForm.value.budget,
-      description: this.requestForm.value.description
+      minBudget: this.requestForm.value.minBudget,
+      maxBudget: this.requestForm.value.maxBudget,
+      additionalRequirements: this.requestForm.value.additionalRequirements || undefined,
+      // Don't send companyId if it's mock/test data (0 or 1)
+      // companyId: this.companyId,
+      // Additional fields for localStorage display
+      companyEmail: this.userEmail,
+      companyName: this.companyName
     };
+
+    console.log('📤 Submitting lease request:', requestData);
 
     this.leaseService.createLeaseRequest(requestData)
       .then(response => {
         this.isSubmitting = false;
-        this.successMessage = 'Lease request submitted successfully!';
-        this.requestForm.reset({ quantity: 1, leaseDuration: 12 });
+        this.successMessage = 'Lease request submitted successfully! ✅';
+        this.requestForm.reset({ leaseDuration: 12 });
         this.loadDashboardData();
         
         setTimeout(() => {
           this.showRequestForm = false;
           this.successMessage = '';
-        }, 2000);
+        }, 3000);
       })
       .catch(error => {
         this.isSubmitting = false;
-        this.errorMessage = 'Failed to submit request. Please try again.';
-        console.error('Error:', error);
+        this.errorMessage = error.error?.message || 'Failed to submit request. Please try again.';
+        console.error('❌ Error submitting lease request:', error);
       });
   }
 
-  getStatusClass(status: string): string {
+  getStatusClass(status: string | undefined): string {
     switch(status) {
       case 'approved': return 'status-approved';
       case 'rejected': return 'status-rejected';
@@ -174,7 +214,7 @@ export class CompanyDashboard implements OnInit {
     }
   }
 
-  getStatusIcon(status: string): string {
+  getStatusIcon(status: string | undefined): string {
     switch(status) {
       case 'approved': return 'fa-check-circle';
       case 'rejected': return 'fa-times-circle';

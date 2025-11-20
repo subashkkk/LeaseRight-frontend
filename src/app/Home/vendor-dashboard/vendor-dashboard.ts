@@ -106,33 +106,56 @@ export class VendorDashboard implements OnInit {
     this.loadDashboardData();
   }
 
-  loadDashboardData(): void {
-    // Load statistics
-    this.stats = this.leaseService.getVendorStats(this.userEmail);
+  async loadDashboardData(): Promise<void> {
+    try {
+      // Load statistics from backend
+      this.stats = await this.leaseService.getVendorStats(this.userEmail);
 
-    // Load pending requests
-    this.pendingRequests = this.leaseService.getPendingRequests();
+      // Load pending requests from backend (all requests - vendors see all)
+      this.pendingRequests = await this.leaseService.getPendingRequests();
 
-    // Load my vehicles
-    this.myVehicles = this.leaseService.getVehiclesByVendor(this.userEmail);
+      // Load my vehicles (still using localStorage for now)
+      this.myVehicles = this.leaseService.getVehiclesByVendor(this.userEmail);
+      
+      console.log('✅ Vendor dashboard data loaded:', {
+        stats: this.stats,
+        pendingRequests: this.pendingRequests.length,
+        vehicles: this.myVehicles.length
+      });
+    } catch (error) {
+      console.error('❌ Error loading vendor dashboard data:', error);
+      this.stats = {
+        totalVehicles: 0,
+        availableVehicles: 0,
+        leasedVehicles: 0,
+        pendingRequests: 0,
+        approvedRequests: 0,
+        totalRevenue: 0
+      };
+      this.pendingRequests = [];
+      this.myVehicles = [];
+    }
   }
 
   respondToRequest(request: LeaseRequest): void {
     this.selectedRequest = request;
+    // Calculate average budget for quotation
+    const avgBudget = (request.minBudget + request.maxBudget) / 2;
+    
     // Prefill quotation defaults based on request
     this.quotation = {
-      requestedBy: request.companyName,
+      requestedBy: request.companyName || 'Company',
       quotedBy: this.companyName || this.userName,
       quotationNumber: 'Q-' + new Date().getFullYear() + '-' + (Math.floor(Math.random() * 900) + 100),
       quotationDate: new Date().toISOString().substring(0, 10),
       validUntil: '',
-      monthlyRent: request.budget,
+      monthlyRent: avgBudget,
       leaseTenure: request.leaseDuration,
-      startDate: request.startDate,
+      startDate: '', // Company can specify in quotation
       notes: '',
-      itemDescription: `${request.vehicleType} lease`,
-      itemQuantity: request.quantity,
-      itemUnitPrice: request.budget,
+      itemDescription: `${request.vehicleType}${request.preferredModel ? ' - ' + request.preferredModel : ''} lease`,
+      itemQuantity: 1, // Default to 1 vehicle
+      itemUnitPrice: avgBudget,
       taxPercent: 0,
       vendorGst: '',
       vendorAddress: '',
@@ -223,9 +246,18 @@ export class VendorDashboard implements OnInit {
     const quotationSummary = summaryParts.join(' | ');
     const fullResponse = quotationSummary || 'Request approved. We will contact you soon!';
 
+    // Convert id to string for updateRequestStatus
+    const requestId = this.selectedRequest.id ? String(this.selectedRequest.id) : '';
+    
+    if (!requestId) {
+      this.isProcessing = false;
+      this.errorMessage = 'Invalid request ID';
+      return;
+    }
+
     this.leaseService
       .updateRequestStatus(
-        this.selectedRequest.id,
+        requestId,
         'approved',
         fullResponse
       )

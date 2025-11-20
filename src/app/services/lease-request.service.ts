@@ -3,20 +3,25 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, catchError } from 'rxjs';
 import { API_CONFIG, getApiUrl } from '../config/api.config';
 
+// Vehicle types from backend enum
+export type VehicleType = 'SUV' | 'SEDAN' | 'HATCHBACK' | 'CUV' | 'MUV' | 'PICKUP' | 'SPORTS' | 'LUXURY';
+
+// Lease Request interface matching backend LeaseRequestDTO
 export interface LeaseRequest {
-  id: string;
-  companyEmail: string;
-  companyName: string;
-  contactPerson: string;
-  vehicleType: string;
-  quantity: number;
-  leaseDuration: number; // in months
-  startDate: string;
-  budget: number;
-  description: string;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
+  id?: number;  // Backend uses Long
+  vehicleType: VehicleType;
+  preferredModel?: string;
+  leaseDuration: number;  // Integer in months/years
+  minBudget: number;
+  maxBudget: number;
+  additionalRequirements?: string;
+  companyId?: number;
+  // Additional frontend-only fields for display
+  createdAt?: string;
+  status?: 'pending' | 'approved' | 'rejected';
   vendorResponse?: string;
+  companyName?: string;
+  companyEmail?: string;
 }
 
 export interface Vehicle {
@@ -38,7 +43,8 @@ export interface Vehicle {
 })
 export class LeaseRequestService {
   // Toggle between backend API and LocalStorage
-  private USE_BACKEND_API = false; // Set to true to use your backend
+  // Set to false for now to use localStorage (backend integration ready when you start backend)
+  private USE_BACKEND_API = true; // Set to true to use your backend
   
   private readonly REQUESTS_KEY = 'lease_requests';
   private readonly VEHICLES_KEY = 'available_vehicles';
@@ -46,14 +52,11 @@ export class LeaseRequestService {
   constructor(
     private http: HttpClient
   ) {
-    // Initialize dummy data only if using LocalStorage
-    if (!this.USE_BACKEND_API) {
-      this.initializeDummyData();
-    }
+    // No dummy data initialization - always use backend
   }
 
   /**
-   * Initialize dummy data for demonstration
+   * Initialize dummy data for demonstration (DEPRECATED - Not used anymore)
    */
   private initializeDummyData(): void {
     // Add dummy vehicles if none exist
@@ -142,11 +145,23 @@ export class LeaseRequestService {
         // Backend API implementation
         const url = getApiUrl(API_CONFIG.LEASE_REQUEST.CREATE);
         console.log('📝 Creating lease request via backend API:', url);
+        console.log('📦 Request data:', requestData);
         
-        this.http.post(url, requestData).subscribe({
+        // Prepare data matching backend LeaseRequestDTO
+        const backendData = {
+          vehicleType: requestData.vehicleType,
+          preferredModel: requestData.preferredModel || '',
+          leaseDuration: requestData.leaseDuration,
+          minBudget: requestData.minBudget,
+          maxBudget: requestData.maxBudget,
+          additionalRequirements: requestData.additionalRequirements || '',
+          companyId: requestData.companyId
+        };
+        
+        this.http.post(url, backendData, { responseType: 'text' }).subscribe({
           next: (response: any) => {
             console.log('✅ Lease request created via backend:', response);
-            resolve(response);
+            resolve({ success: true, message: response, data: backendData });
           },
           error: (error) => {
             console.error('❌ Backend lease request creation failed:', error);
@@ -156,14 +171,14 @@ export class LeaseRequestService {
       } else {
         // LocalStorage fallback
         try {
-          const newRequest: LeaseRequest = {
+          const newRequest: any = {
             ...requestData,
-            id: this.generateId(),
+            id: Math.floor(Math.random() * 10000),
             status: 'pending',
             createdAt: new Date().toISOString()
           };
 
-          const requests = this.getAllLeaseRequests();
+          const requests = this.getAllLeaseRequestsLocal();
           requests.push(newRequest);
           localStorage.setItem(this.REQUESTS_KEY, JSON.stringify(requests));
 
@@ -178,9 +193,9 @@ export class LeaseRequestService {
   }
 
   /**
-   * Get all lease requests
+   * Get all lease requests from LocalStorage (for local testing)
    */
-  getAllLeaseRequests(): LeaseRequest[] {
+  private getAllLeaseRequestsLocal(): any[] {
     try {
       const data = localStorage.getItem(this.REQUESTS_KEY);
       return data ? JSON.parse(data) : [];
@@ -191,68 +206,103 @@ export class LeaseRequestService {
   }
 
   /**
-   * Get requests by company email
+   * Get all lease requests from backend
    */
-  getRequestsByCompany(companyEmail: string): LeaseRequest[] {
-    return this.getAllLeaseRequests().filter(req => req.companyEmail === companyEmail);
-  }
-
-  /**
-   * Get all pending requests (for vendors)
-   */
-  getPendingRequests(): LeaseRequest[] {
-    return this.getAllLeaseRequests().filter(req => req.status === 'pending');
-  }
-
-  /**
-   * Update request status
-   * Uses backend API if USE_BACKEND_API is true, otherwise uses LocalStorage
-   */
-  updateRequestStatus(requestId: string, status: 'approved' | 'rejected', vendorResponse?: string): Promise<any> {
+  getAllLeaseRequests(): Promise<LeaseRequest[]> {
     return new Promise((resolve, reject) => {
       if (this.USE_BACKEND_API) {
-        // Backend API implementation
-        const endpoint = status === 'approved' 
-          ? API_CONFIG.LEASE_REQUEST.APPROVE.replace(':id', requestId)
-          : API_CONFIG.LEASE_REQUEST.REJECT.replace(':id', requestId);
-        const url = getApiUrl(endpoint);
-        console.log(`📝 Updating request status via backend API (${status}):`, url);
+        const url = getApiUrl(API_CONFIG.LEASE_REQUEST.GET_ALL);
+        console.log('📥 Fetching all lease requests from backend:', url);
         
-        const body = vendorResponse ? { vendorResponse } : {};
-        
-        this.http.post(url, body).subscribe({
-          next: (response: any) => {
-            console.log(`✅ Request ${requestId} ${status} via backend:`, response);
-            resolve(response);
+        this.http.get<LeaseRequest[]>(url).subscribe({
+          next: (requests) => {
+            console.log('✅ Fetched requests:', requests);
+            resolve(requests);
           },
           error: (error) => {
-            console.error(`❌ Backend request status update failed:`, error);
+            console.error('❌ Failed to fetch requests:', error);
             reject(error);
           }
         });
       } else {
-        // LocalStorage fallback
-        try {
-          const requests = this.getAllLeaseRequests();
-          const index = requests.findIndex(req => req.id === requestId);
+        resolve(this.getAllLeaseRequestsLocal());
+      }
+    });
+  }
 
-          if (index === -1) {
-            reject({ error: 'Request not found' });
-            return;
+  /**
+   * Get requests by company ID from backend
+   */
+  getRequestsByCompany(companyId: number): Promise<LeaseRequest[]> {
+    return new Promise((resolve, reject) => {
+      if (this.USE_BACKEND_API) {
+        const url = getApiUrl(API_CONFIG.LEASE_REQUEST.GET_BY_COMPANY.replace(':companyId', companyId.toString()));
+        console.log('📥 Fetching company requests from backend:', url);
+        
+        this.http.get<LeaseRequest[]>(url).subscribe({
+          next: (requests) => {
+            console.log('✅ Fetched company requests:', requests);
+            resolve(requests);
+          },
+          error: (error) => {
+            console.error('❌ Failed to fetch company requests:', error);
+            reject(error);
           }
+        });
+      } else {
+        const localRequests = this.getAllLeaseRequestsLocal();
+        resolve(localRequests);
+      }
+    });
+  }
 
-          requests[index].status = status;
-          if (vendorResponse) {
-            requests[index].vendorResponse = vendorResponse;
-          }
+  /**
+   * Get pending requests for vendors (all requests from backend)
+   */
+  getPendingRequests(): Promise<LeaseRequest[]> {
+    return new Promise((resolve, reject) => {
+      if (this.USE_BACKEND_API) {
+        // Fetch all requests and filter pending on frontend
+        this.getAllLeaseRequests()
+          .then(requests => {
+            const pending = requests.filter(req => !req.status || req.status === 'pending');
+            resolve(pending);
+          })
+          .catch(error => reject(error));
+      } else {
+        const pending = this.getAllLeaseRequestsLocal().filter((req: any) => req.status === 'pending');
+        resolve(pending);
+      }
+    });
+  }
 
-          localStorage.setItem(this.REQUESTS_KEY, JSON.stringify(requests));
-          console.log(`✅ Request ${requestId} status updated to ${status} (LocalStorage)`);
-          resolve({ success: true, message: 'Request status updated' });
-        } catch (error) {
-          console.error('❌ Error updating request status:', error);
-          reject(error);
+  /**
+   * Update request status
+   * Uses LocalStorage for now (backend endpoint for status update not yet implemented)
+   */
+  updateRequestStatus(requestId: string, status: 'approved' | 'rejected', vendorResponse?: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      // LocalStorage implementation (backend status update API not available yet)
+      try {
+        const requests = this.getAllLeaseRequestsLocal();
+        const index = requests.findIndex((req: any) => String(req.id) === String(requestId));
+
+        if (index === -1) {
+          reject({ error: 'Request not found' });
+          return;
         }
+
+        requests[index].status = status;
+        if (vendorResponse) {
+          requests[index].vendorResponse = vendorResponse;
+        }
+
+        localStorage.setItem(this.REQUESTS_KEY, JSON.stringify(requests));
+        console.log(`✅ Request ${requestId} status updated to ${status} (LocalStorage)`);
+        resolve({ success: true, message: 'Request status updated' });
+      } catch (error) {
+        console.error('❌ Error updating request status:', error);
+        reject(error);
       }
     });
   }
@@ -260,14 +310,19 @@ export class LeaseRequestService {
   /**
    * Get request statistics for company
    */
-  getCompanyStats(companyEmail: string): any {
-    const requests = this.getRequestsByCompany(companyEmail);
-    return {
-      total: requests.length,
-      pending: requests.filter(r => r.status === 'pending').length,
-      approved: requests.filter(r => r.status === 'approved').length,
-      rejected: requests.filter(r => r.status === 'rejected').length
-    };
+  async getCompanyStats(companyId: number): Promise<any> {
+    try {
+      const requests = await this.getRequestsByCompany(companyId);
+      return {
+        total: requests.length,
+        pending: requests.filter((r: LeaseRequest) => !r.status || r.status === 'pending').length,
+        approved: requests.filter((r: LeaseRequest) => r.status === 'approved').length,
+        rejected: requests.filter((r: LeaseRequest) => r.status === 'rejected').length
+      };
+    } catch (error) {
+      console.error('❌ Error getting company stats:', error);
+      return { total: 0, pending: 0, approved: 0, rejected: 0 };
+    }
   }
 
   // ========== VEHICLE METHODS ==========
@@ -326,18 +381,30 @@ export class LeaseRequestService {
   /**
    * Get vendor statistics
    */
-  getVendorStats(vendorEmail: string): any {
-    const vehicles = this.getVehiclesByVendor(vendorEmail);
-    const allRequests = this.getAllLeaseRequests();
-    
-    return {
-      totalVehicles: vehicles.length,
-      availableVehicles: vehicles.filter(v => v.available).length,
-      leasedVehicles: vehicles.filter(v => !v.available).length,
-      pendingRequests: allRequests.filter(r => r.status === 'pending').length,
-      approvedRequests: allRequests.filter(r => r.status === 'approved').length,
-      totalRevenue: vehicles.filter(v => !v.available).reduce((sum, v) => sum + v.pricePerMonth, 0)
-    };
+  async getVendorStats(vendorEmail: string): Promise<any> {
+    try {
+      const vehicles = this.getVehiclesByVendor(vendorEmail);
+      const allRequests = await this.getAllLeaseRequests();
+      
+      return {
+        totalVehicles: vehicles.length,
+        availableVehicles: vehicles.filter((v: Vehicle) => v.available).length,
+        leasedVehicles: vehicles.filter((v: Vehicle) => !v.available).length,
+        pendingRequests: allRequests.filter((r: LeaseRequest) => !r.status || r.status === 'pending').length,
+        approvedRequests: allRequests.filter((r: LeaseRequest) => r.status === 'approved').length,
+        totalRevenue: vehicles.filter((v: Vehicle) => !v.available).reduce((sum: number, v: Vehicle) => sum + v.pricePerMonth, 0)
+      };
+    } catch (error) {
+      console.error('❌ Error getting vendor stats:', error);
+      return {
+        totalVehicles: 0,
+        availableVehicles: 0,
+        leasedVehicles: 0,
+        pendingRequests: 0,
+        approvedRequests: 0,
+        totalRevenue: 0
+      };
+    }
   }
 
   // ========== UTILITY METHODS ==========

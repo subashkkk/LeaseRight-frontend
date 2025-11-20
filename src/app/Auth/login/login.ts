@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { slideInAnimation, fadeInAnimation } from '../auth.animations';
+import { TestCredentialsService } from '../../services/test-credentials.service';
 
 @Component({
   selector: 'app-login',
@@ -32,12 +33,16 @@ export class Login implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private testCredentials: TestCredentialsService
   ) {}
 
   ngOnInit(): void {
     console.log('🔍 Login component ngOnInit called');
     console.log('📍 Current URL:', this.router.url);
+    
+    // Initialize test credentials for local development
+    this.testCredentials.initializeTestCredentials();
     
     // Check if user is already logged in
     const isAuth = this.authService.isAuthenticated();

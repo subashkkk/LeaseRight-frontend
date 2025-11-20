@@ -55,17 +55,13 @@ export const API_CONFIG = {
     SEARCH: '/vehicle/search'
   },
   
-  // Lease Request Endpoints
+  // Lease Request Endpoints (matching backend controller)
   LEASE_REQUEST: {
-    CREATE: '/lease-request/create',
-    GET_ALL: '/lease-request/all',
-    GET_BY_ID: '/lease-request/:id',
-    UPDATE_STATUS: '/lease-request/update-status/:id',
-    GET_PENDING: '/lease-request/pending',
-    GET_BY_COMPANY: '/lease-request/company/:companyId',
-    GET_BY_VENDOR: '/lease-request/vendor/:vendorId',
-    APPROVE: '/lease-request/approve/:id',
-    REJECT: '/lease-request/reject/:id'
+    CREATE: '/lease-requests/new-Lease-Request',      // POST - Create new lease request
+    UPDATE: '/lease-requests/:id',                    // PUT - Update existing lease request
+    GET_ALL: '/lease-requests/all',                   // GET - Get all requests (for vendors)
+    GET_BY_ID: '/lease-requests/:id',                 // GET - Get single request by ID
+    GET_BY_COMPANY: '/lease-requests/company/:companyId'  // GET - Get requests by company ID
   }
 };
 
