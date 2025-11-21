@@ -20,7 +20,7 @@
   </header>
 
   <!-- Main Content -->
-  <main class="dashboard-main">
+  <main class="dashboard-main" *ngIf="!showRequestForm">
     <div class="welcome-section">
       <h2>Welcome back, {{ userName }}! 👋</h2>
       <p>Manage your vehicle leases and requests</p>
@@ -106,14 +106,25 @@
 
     <!-- New Lease Request Form -->
     <div class="form-section" *ngIf="showRequestForm">
-      <div class="section-header">
-        <h3>Create New Lease Request</h3>
-        <button class="btn-close" (click)="toggleRequestForm()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      
-      <form [formGroup]="requestForm" (ngSubmit)="submitLeaseRequest()" class="lease-form">
+      <div class="form-content-wrapper">
+        <div class="section-header">
+          <h3>Create New Lease Request</h3>
+          <button class="btn-close" (click)="toggleRequestForm()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <!-- Success/Error Messages -->
+        <div class="alert alert-success" *ngIf="successMessage">
+          <i class="fas fa-check-circle"></i>
+          {{ successMessage }}
+        </div>
+        <div class="alert alert-error" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ errorMessage }}
+        </div>
+        
+        <form [formGroup]="requestForm" (ngSubmit)="submitLeaseRequest()" class="lease-form">
         <div class="form-row">
           <div class="form-group">
             <label>Vehicle Type *</label>
@@ -164,11 +175,12 @@
                     placeholder="Any specific features, colors, or requirements..."></textarea>
         </div>
 
-        <button type="submit" class="btn-submit" [disabled]="isSubmitting || requestForm.invalid">
-          <i [class]="isSubmitting ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
-          {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
-        </button>
-      </form>
+          <button type="submit" class="btn-submit" [disabled]="isSubmitting || requestForm.invalid">
+            <i [class]="isSubmitting ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
+            {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+          </button>
+        </form>
+      </div>
     </div>
 
     <!-- Available Vehicles Browser -->
@@ -252,4 +264,84 @@
       </p>
     </div>
   </main>
+
+  <!-- New Lease Request Form (Full Page) -->
+  <div class="form-section" *ngIf="showRequestForm">
+    <div class="form-content-wrapper">
+      <div class="section-header">
+        <h3>Create New Lease Request</h3>
+        <button class="btn-close" (click)="toggleRequestForm()">
+          <i class="fas fa-times"></i>
+          Close
+        </button>
+      </div>
+      
+      <!-- Success/Error Messages -->
+      <div class="alert alert-success" *ngIf="successMessage">
+        <i class="fas fa-check-circle"></i>
+        {{ successMessage }}
+      </div>
+      <div class="alert alert-error" *ngIf="errorMessage">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ errorMessage }}
+      </div>
+      
+      <form [formGroup]="requestForm" (ngSubmit)="submitLeaseRequest()" class="lease-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Vehicle Type *</label>
+            <select formControlName="vehicleType" class="form-input">
+              <option value="">Select Vehicle Type</option>
+              <option value="SUV">SUV</option>
+              <option value="SEDAN">Sedan</option>
+              <option value="HATCHBACK">Hatchback</option>
+              <option value="CUV">CUV (Crossover)</option>
+              <option value="MUV">MUV (Multi Utility Vehicle)</option>
+              <option value="PICKUP">Pickup Truck</option>
+              <option value="SPORTS">Sports Car</option>
+              <option value="LUXURY">Luxury</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Preferred Model (Optional)</label>
+            <input type="text" formControlName="preferredModel" class="form-input" 
+                   placeholder="e.g., Toyota Camry">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Minimum Budget (₹/month) *</label>
+            <input type="number" formControlName="minBudget" class="form-input" 
+                   min="0" placeholder="₹ 10,000">
+          </div>
+
+          <div class="form-group">
+            <label>Maximum Budget (₹/month) *</label>
+            <input type="number" formControlName="maxBudget" class="form-input" 
+                   min="0" placeholder="₹ 50,000">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Lease Duration (in months) *</label>
+          <input type="number" formControlName="leaseDuration" class="form-input" 
+                 min="1" placeholder="12">
+          <small class="form-hint">Duration will be converted to years (e.g., 12 months = 1 year)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Additional Requirements (Optional)</label>
+          <textarea formControlName="additionalRequirements" class="form-input" rows="4" 
+                    placeholder="Any specific features, colors, or requirements..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="isSubmitting || requestForm.invalid">
+          <i [class]="isSubmitting ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
+          {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+        </button>
+      </form>
+    </div>
+  </div>
 </div>

@@ -128,12 +128,15 @@ export class CompanyDashboard implements OnInit {
   toggleRequestForm(): void {
     this.showRequestForm = !this.showRequestForm;
     this.showVehicleBrowser = false;
+    this.showVendorQuotations = false;
     this.successMessage = '';
     this.errorMessage = '';
     if (this.showRequestForm) {
       this.requestForm.reset({
         leaseDuration: 12
       });
+      // Scroll to top when opening form
+      window.scrollTo(0, 0);
     }
   }
 

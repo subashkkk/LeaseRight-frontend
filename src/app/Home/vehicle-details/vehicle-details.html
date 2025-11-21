@@ -1,0 +1,57 @@
+<div class="page-wrapper">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="brand">
+        <img src="assets/lr.jpeg" alt="LeaseRight Logo" class="logo" />
+        <div>
+          <h1>Lease Request</h1>
+          <p class="header-subtitle">Vendor · Add New Vehicle</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="card">
+      <h2>Vehicle Details Confirmation</h2>
+      <p class="subtitle">Review the fetched information and fill any missing fields.</p>
+
+      <div class="inline-error" *ngIf="errorMessage">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Registration Number<span class="required">*</span></label>
+          <input class="form-input" [(ngModel)]="details.registrationNumber" />
+        </div>
+        <div class="form-group">
+          <label>Owner Name<span class="required">*</span></label>
+          <input class="form-input" [(ngModel)]="details.ownerName" />
+        </div>
+        <div class="form-group">
+          <label>Make</label>
+          <input class="form-input" [(ngModel)]="details.make" />
+        </div>
+        <div class="form-group">
+          <label>Model</label>
+          <input class="form-input" [(ngModel)]="details.model" />
+        </div>
+        <div class="form-group">
+          <label>Fuel Type</label>
+          <input class="form-input" [(ngModel)]="details.fuelType" />
+        </div>
+        <div class="form-group">
+          <label>Registration Date</label>
+          <input type="date" class="form-input" [(ngModel)]="details.registrationDate" />
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button type="button" class="btn-secondary" (click)="cancel()">Cancel</button>
+        <button type="button" class="btn-primary" (click)="next()">Save Vehicle Details</button>
+      </div>
+    </div>
+  </main>
+</div>

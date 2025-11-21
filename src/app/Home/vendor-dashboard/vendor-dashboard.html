@@ -126,6 +126,77 @@
       </p>
     </div>
 
+    <!-- Add New Vehicle Section -->
+    <div class="requests-section add-vehicle-section">
+      <div class="add-vehicle-header" (click)="toggleAddVehicleSection()">
+        <h3>Add New Vehicle</h3>
+        <button class="add-toggle-btn" type="button">
+          <i class="fas" [ngClass]="{ 'fa-chevron-down': !showAddVehicleSection, 'fa-chevron-up': showAddVehicleSection }"></i>
+        </button>
+      </div>
+
+      <div class="add-vehicle-body" *ngIf="showAddVehicleSection">
+        <div class="add-vehicle-grid">
+          <div class="form-group">
+            <label>Vehicle Number</label>
+            <input class="form-input" [(ngModel)]="newVehicleNumber" placeholder="Enter registration number" />
+          </div>
+          <div class="form-group">
+            <label>Owner Name</label>
+            <input class="form-input" [(ngModel)]="newOwnerName" placeholder="Enter owner name" />
+          </div>
+        </div>
+
+        <button class="btn-respond" type="button" (click)="fetchVehicleDetails()">
+          <i [class]="lookupLoading ? 'fas fa-spinner fa-spin' : 'fas fa-search' "></i>
+          {{ lookupLoading ? 'Fetching details...' : 'Fetch Vehicle Details' }}
+        </button>
+
+        <div class="inline-error" *ngIf="lookupError">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ lookupError }}
+        </div>
+
+        <div class="request-description" *ngIf="lookedUpVehicle">
+          <strong>Vehicle Details (editable)</strong>
+          <div class="add-vehicle-grid">
+            <div class="form-group">
+              <label>Registration Number</label>
+              <input class="form-input" [(ngModel)]="lookedUpVehicle.registrationNumber" />
+            </div>
+            <div class="form-group">
+              <label>Owner Name</label>
+              <input class="form-input" [(ngModel)]="lookedUpVehicle.ownerName" />
+            </div>
+            <div class="form-group">
+              <label>Make</label>
+              <input class="form-input" [(ngModel)]="lookedUpVehicle.make" />
+            </div>
+            <div class="form-group">
+              <label>Model</label>
+              <input class="form-input" [(ngModel)]="lookedUpVehicle.model" />
+            </div>
+            <div class="form-group">
+              <label>Fuel Type</label>
+              <input class="form-input" [(ngModel)]="lookedUpVehicle.fuelType" />
+            </div>
+            <div class="form-group">
+              <label>Registration Date</label>
+              <input type="date" class="form-input" [(ngModel)]="lookedUpVehicle.registrationDate" />
+            </div>
+          </div>
+        </div>
+
+
+        <div class="button-group" style="margin-top: 16px;">
+          <button class="btn-approve" type="button" (click)="submitNewVehicle()">
+            <i class="fas fa-save"></i>
+            Submit Vehicle
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Response Form Modal -->
     <div class="modal" *ngIf="showResponseForm" (click)="closeResponseForm()">
       <div class="modal-content" (click)="$event.stopPropagation()">

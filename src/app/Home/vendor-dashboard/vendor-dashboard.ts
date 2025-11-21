@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../Auth/auth.service';
 import { LeaseRequestService, LeaseRequest, Vehicle } from '../../services/lease-request.service';
+import { VehicleLookupService, VehicleLookupResult } from '../../services/vehicle-lookup.service';
+import { VehicleFlowService } from '../../services/vehicle-flow.service';
 
 @Component({
   selector: 'app-vendor-dashboard',
@@ -31,6 +33,16 @@ export class VendorDashboard implements OnInit {
   pendingRequests: LeaseRequest[] = [];
   myVehicles: Vehicle[] = [];
   selectedRequest: LeaseRequest | null = null;
+
+  // Add New Vehicle section state
+  showAddVehicleSection: boolean = false;
+  newVehicleNumber: string = '';
+  newOwnerName: string = '';
+  lookupLoading: boolean = false;
+  lookupError: string = '';
+  lookedUpVehicle: VehicleLookupResult | null = null;
+  rcFrontFileName: string = '';
+  rcBackFileName: string = '';
 
   // Structured quotation details
   quotation: {
@@ -78,7 +90,9 @@ export class VendorDashboard implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private leaseService: LeaseRequestService
+    private leaseService: LeaseRequestService,
+    private vehicleLookupService: VehicleLookupService,
+    private vehicleFlow: VehicleFlowService
   ) {}
 
   ngOnInit(): void {
@@ -275,6 +289,85 @@ export class VendorDashboard implements OnInit {
       this.errorMessage = 'Failed to update request. Please try again.';
       console.error('Error:', error);
     });
+  }
+
+  // ===== Add New Vehicle section methods =====
+
+  toggleAddVehicleSection(): void {
+    this.showAddVehicleSection = !this.showAddVehicleSection;
+    this.lookupError = '';
+  }
+
+  fetchVehicleDetails(): void {
+    this.lookupError = '';
+    this.lookedUpVehicle = null;
+
+    if (!this.newVehicleNumber || !this.newOwnerName) {
+      this.lookupError = 'Please enter both vehicle number and owner name.';
+      return;
+    }
+
+    this.lookupLoading = true;
+    this.vehicleLookupService
+      .lookupByRegistration(this.newVehicleNumber, this.newOwnerName)
+      .then(result => {
+        this.lookupLoading = false;
+        this.lookedUpVehicle = result;
+
+        // Save into flow service and navigate to details page
+        this.vehicleFlow.setDetails({
+          registrationNumber: result.registrationNumber,
+          ownerName: result.ownerName,
+          make: result.make || '',
+          model: result.model || '',
+          fuelType: result.fuelType || '',
+          registrationDate: result.registrationDate || ''
+        });
+
+        this.router.navigate(['/vendor/vehicle-details']);
+      })
+      .catch(error => {
+        console.error('Vehicle lookup failed:', error);
+        this.lookupLoading = false;
+        this.lookupError = 'Failed to fetch vehicle details. Please try again or fill details manually.';
+      });
+  }
+
+  onRcFrontSelected(event: any): void {
+    const file = event?.target?.files?.[0];
+    this.rcFrontFileName = file ? file.name : '';
+  }
+
+  onRcBackSelected(event: any): void {
+    const file = event?.target?.files?.[0];
+    this.rcBackFileName = file ? file.name : '';
+  }
+
+  submitNewVehicle(): void {
+    this.lookupError = '';
+
+    if (!this.newVehicleNumber || !this.newOwnerName) {
+      this.lookupError = 'Please enter vehicle number and owner name before submitting.';
+      return;
+    }
+
+    console.log('Submitting new vehicle:', {
+      registrationNumber: this.newVehicleNumber,
+      ownerName: this.newOwnerName,
+      details: this.lookedUpVehicle,
+      rcFrontFileName: this.rcFrontFileName,
+      rcBackFileName: this.rcBackFileName,
+    });
+
+    this.successMessage = 'Vehicle submitted successfully.';
+    this.errorMessage = '';
+
+    // Reset form fields
+    this.newVehicleNumber = '';
+    this.newOwnerName = '';
+    this.lookedUpVehicle = null;
+    this.rcFrontFileName = '';
+    this.rcBackFileName = '';
   }
 
   logout(): void {

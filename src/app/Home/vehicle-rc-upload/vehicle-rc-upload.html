@@ -1,0 +1,50 @@
+<div class="page-wrapper">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="brand">
+        <img src="assets/lr.jpeg" alt="LeaseRight Logo" class="logo" />
+        <div>
+          <h1>Lease Request</h1>
+          <p class="header-subtitle">Vendor · RC Document Upload</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="card">
+      <h2>RC Document Upload</h2>
+      <p class="subtitle">Upload the RC book images for this vehicle.</p>
+
+      <div class="summary" *ngIf="details">
+        <h3>Vehicle Summary</h3>
+        <p><strong>Registration:</strong> {{ details.registrationNumber }}</p>
+        <p><strong>Owner:</strong> {{ details.ownerName }}</p>
+        <p *ngIf="details.make || details.model"><strong>Make/Model:</strong> {{ details.make }} {{ details.model }}</p>
+      </div>
+
+      <div class="inline-error" *ngIf="errorMessage">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>RC Book (Front)<span class="required">*</span></label>
+          <input type="file" class="form-input" (change)="onRcFrontSelected($event)" />
+          <p *ngIf="rcFrontFileName" class="file-name">Selected: {{ rcFrontFileName }}</p>
+        </div>
+        <div class="form-group">
+          <label>RC Book (Back)<span class="required">*</span></label>
+          <input type="file" class="form-input" (change)="onRcBackSelected($event)" />
+          <p *ngIf="rcBackFileName" class="file-name">Selected: {{ rcBackFileName }}</p>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button type="button" class="btn-secondary" (click)="cancel()">Cancel</button>
+        <button type="button" class="btn-primary" (click)="submit()">Submit Vehicle</button>
+      </div>
+    </div>
+  </main>
+</div>
