@@ -9,11 +9,11 @@ export const API_CONFIG = {
   
   // Auth Endpoints
   AUTH: {
-    LOGIN: '/user/login',
+    LOGIN: '/users/login',
     SIGNUP: '/users/addNewUser',
-    LOGOUT: '/user/logout',
-    REFRESH_TOKEN: '/user/refresh-token',
-    VERIFY_TOKEN: '/user/verify-token',
+    LOGOUT: '/users/logout',
+    REFRESH_TOKEN: '/users/refresh-token',
+    VERIFY_TOKEN: '/users/verify-token',
 
     // Forgot Password / Reset Password
     FORGOT_PASSWORD: '/forgot-password',   // POST { mail }

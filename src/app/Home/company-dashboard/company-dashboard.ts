@@ -69,8 +69,33 @@ export class CompanyDashboard implements OnInit {
     this.userName = this.authService.getUserName() || 'Company User';
     this.userEmail = user?.email || '';
     this.companyName = user?.companyName || '';
-    // For now, use a mock companyId (1). In production, this should come from backend after login
-    this.companyId = 1;
+    
+    // Get actual company ID from user data (from JWT token)
+    const userDataString = localStorage.getItem('user');
+    console.log('📦 Raw user data from localStorage:', userDataString);
+    
+    if (!userDataString) {
+      console.error('❌ CRITICAL: No user data in localStorage! User must login again.');
+      alert('Session expired. Please login again.');
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    const userData = JSON.parse(userDataString || '{}');
+    console.log('📦 Parsed user data:', userData);
+    console.log('📦 userData.id:', userData.id);
+    console.log('📦 typeof userData.id:', typeof userData.id);
+    
+    if (!userData.id) {
+      console.error('❌ CRITICAL: User data has no ID! userData:', userData);
+      alert('Invalid session data. Please login again.');
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    this.companyId = userData.id; // Use actual user ID as company ID (NO FALLBACK!)
+    console.log('🔑 Company ID set to:', this.companyId);
+    console.log('🔑 Company ID type:', typeof this.companyId);
 
     // Initialize form
     this.initializeRequestForm();
@@ -93,19 +118,25 @@ export class CompanyDashboard implements OnInit {
 
   async loadDashboardData(): Promise<void> {
     try {
-      // TEMPORARY: Show all requests since companyId is not associated yet
-      // TODO: Filter by actual companyId after login integration
-      console.log('🔄 Loading all requests (companyId not associated yet)...');
+      // Get requests specific to this company using the company ID
+      console.log(`🔄 Loading requests for company ID: ${this.companyId}...`);
+      console.log(`📍 API URL will be: http://localhost:8080/lease-requests/company/${this.companyId}`);
       
-      const allRequests = await this.leaseService.getAllLeaseRequests();
-      this.myRequests = allRequests;
+      const companyRequests = await this.leaseService.getRequestsByCompany(this.companyId);
+      console.log('📦 Raw response from API:', companyRequests);
+      console.log('📊 Number of requests received:', companyRequests.length);
+      console.log('📋 Requests array:', JSON.stringify(companyRequests, null, 2));
       
-      // Calculate stats from all requests
+      this.myRequests = companyRequests;
+      console.log('💾 myRequests set to:', this.myRequests);
+      console.log('💾 myRequests.length:', this.myRequests.length);
+      
+      // Calculate stats from company-specific requests
       this.stats = {
-        total: allRequests.length,
-        pending: allRequests.filter(r => !r.status || r.status === 'pending').length,
-        approved: allRequests.filter(r => r.status === 'approved').length,
-        rejected: allRequests.filter(r => r.status === 'rejected').length
+        total: companyRequests.length,
+        pending: companyRequests.filter(r => !r.status || r.status === 'pending').length,
+        approved: companyRequests.filter(r => r.status === 'approved').length,
+        rejected: companyRequests.filter(r => r.status === 'rejected').length
       };
 
       // Load available vehicles (still using localStorage for now)
@@ -117,11 +148,19 @@ export class CompanyDashboard implements OnInit {
         vehicles: this.availableVehicles.length,
         requestDetails: this.myRequests
       });
-    } catch (error) {
-      console.error('❌ Error loading dashboard data:', error);
+    } catch (error: any) {
+      console.error(`❌ Error loading company ${this.companyId} dashboard data:`, error);
+      console.error('❌ Error details:', {
+        message: error?.message,
+        status: error?.status,
+        statusText: error?.statusText,
+        error: error?.error,
+        fullError: JSON.stringify(error, null, 2)
+      });
       this.stats = { total: 0, pending: 0, approved: 0, rejected: 0 };
       this.myRequests = [];
       this.availableVehicles = [];
+      alert(`Error loading requests: ${error?.message || 'Unknown error'}. Check console for details.`);
     }
   }
 
@@ -181,8 +220,7 @@ export class CompanyDashboard implements OnInit {
       minBudget: this.requestForm.value.minBudget,
       maxBudget: this.requestForm.value.maxBudget,
       additionalRequirements: this.requestForm.value.additionalRequirements || undefined,
-      // Don't send companyId if it's mock/test data (0 or 1)
-      // companyId: this.companyId,
+      companyId: this.companyId,  // Send actual company ID from JWT token
       // Additional fields for localStorage display
       companyEmail: this.userEmail,
       companyName: this.companyName

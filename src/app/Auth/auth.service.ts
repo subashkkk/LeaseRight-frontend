@@ -10,8 +10,8 @@ import { API_CONFIG, getApiUrl } from '../config/api.config';
 })
 export class AuthService {
   // Toggle between backend API and LocalStorage  
-  // Keep false: Backend login endpoint not implemented yet, using test credentials
-  private USE_BACKEND_API = false; // Set to true to use your backend
+  // Set to true to use real backend with BCrypt password validation
+  private USE_BACKEND_API = true; // Backend login is now working!
   
   private readonly VENDOR_STORAGE_KEY = 'vendor_registrations';
   private readonly COMPANY_STORAGE_KEY = 'company_registrations';
@@ -39,26 +39,48 @@ export class AuthService {
       const url = getApiUrl(API_CONFIG.AUTH.LOGIN);
       console.log('🔐 Logging in via backend API:', url);
       
-      return this.http.post(url, credentials).pipe(
+      // Backend expects 'mail' not 'email'
+      const backendCredentials = {
+        mail: credentials.email,
+        password: credentials.password
+      };
+      
+      return this.http.post(url, backendCredentials).pipe(
         map((response: any) => {
           console.log('✅ Backend login successful:', response);
           
-          // Store authentication data
-          if (response.token) {
-            localStorage.setItem('authToken', response.token);
+          // Backend response format: { success, message, userInfo: { id, name, mail, role, contactNo }, token }
+          if (response.success && response.userInfo && response.token) {
+            // Use the REAL JWT token from backend (not fake generated one)
+            const jwtToken = response.token;
+            localStorage.setItem('authToken', jwtToken);
+            
+            // Store user data
+            localStorage.setItem('user', JSON.stringify(response.userInfo));
+            localStorage.setItem('userRole', response.userInfo.role);
+            localStorage.setItem('userName', response.userInfo.name);
+            localStorage.setItem('userEmail', response.userInfo.mail);
+            
+            // Return formatted response for frontend compatibility
+            return {
+              success: response.success,
+              message: response.message,
+              token: jwtToken,
+              user: {
+                id: response.userInfo.id,  // ← CRITICAL: Include user ID!
+                email: response.userInfo.mail,
+                firstName: response.userInfo.name.split(' ')[0],
+                lastName: response.userInfo.name.split(' ').slice(1).join(' ') || '',
+                name: response.userInfo.name,
+                role: response.userInfo.role,
+                contactNo: response.userInfo.contactNo
+              },
+              userRole: response.userInfo.role,
+              userName: response.userInfo.name
+            };
+          } else {
+            throw new Error(response.message || 'Login failed');
           }
-          if (response.user) {
-            localStorage.setItem('user', JSON.stringify(response.user));
-          }
-          if (response.userRole) {
-            localStorage.setItem('userRole', response.userRole);
-          }
-          if (response.userName || (response.user && response.user.firstName)) {
-            const userName = response.userName || `${response.user.firstName} ${response.user.lastName}`;
-            localStorage.setItem('userName', userName);
-          }
-          
-          return response;
         }),
         catchError(error => {
           console.error('❌ Backend login failed:', error);
