@@ -13,11 +13,7 @@ export const API_CONFIG = {
     SIGNUP: '/users/addNewUser',
     LOGOUT: '/users/logout',
     REFRESH_TOKEN: '/users/refresh-token',
-    VERIFY_TOKEN: '/users/verify-token',
-
-    // Forgot Password / Reset Password
-    FORGOT_PASSWORD: '/forgot-password',   // POST { mail }
-    RESET_PASSWORD: '/reset-password'      // POST { mail, otp, newPassword }
+    VERIFY_TOKEN: '/users/verify-token'
   },
 
   // OTP Endpoints - User Registration with OTP
