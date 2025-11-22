@@ -4,52 +4,44 @@
     <div class="header-content">
       <div class="brand">
         <img src="assets/lr.jpeg" alt="LeaseRight Logo" class="logo">
-        <h1>Lease Request</h1>
+        <h1>Admin Panel</h1>
       </div>
       <div class="user-section">
-        <app-profile-dropdown
-          [userName]="userName"
-          [userRole]="'Admin Dashboard'"
-          [menuItems]="profileMenuItems"
-          (menuItemClick)="onProfileMenuClick($event)"
-          (logoutClick)="logout()">
-        </app-profile-dropdown>
+        <div class="search-box">
+          <input type="text" placeholder="Search users..." [(ngModel)]="searchQuery">
+          <i class="fas fa-search"></i>
+        </div>
+        <button class="btn-logout" (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </button>
       </div>
     </div>
   </header>
 
-  <!-- Account Details Section -->
-  <div class="dashboard-main" *ngIf="showAccountDetails">
-    <app-account-details [userRole]="'admin'"></app-account-details>
-    <div style="text-align: center; margin-top: 20px;">
-      <button class="action-btn" (click)="closeAccountDetails()">
-        <i class="fas fa-arrow-left"></i>
-        Back to Dashboard
-      </button>
-    </div>
-  </div>
-
   <!-- Main Content -->
-  <main class="dashboard-main" *ngIf="!showAccountDetails">
+  <main class="dashboard-main">
+
+    <!-- Welcome Section -->
     <div class="welcome-section">
       <h2>Welcome back, {{ userName }}! 👋</h2>
-      <p>Manage companies, vendors, and lease activity across the platform</p>
+      <p>Manage all users, vendors, and companies across the platform</p>
     </div>
 
     <!-- Stats Cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon company">
-          <i class="fas fa-building"></i>
+        <div class="stat-icon admin">
+          <i class="fas fa-users"></i>
         </div>
         <div class="stat-details">
-          <h3>Total Companies</h3>
-          <p class="stat-number">{{ stats.totalCompanies }}</p>
+          <h3>Total Users</h3>
+          <p class="stat-number">{{ stats.totalUsers }}</p>
         </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon company">
+        <div class="stat-icon admin">
           <i class="fas fa-user-tie"></i>
         </div>
         <div class="stat-details">
@@ -59,22 +51,22 @@
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon company" style="background: linear-gradient(135deg, #ffc107, #ff9800);">
-          <i class="fas fa-clock"></i>
+        <div class="stat-icon admin">
+          <i class="fas fa-building"></i>
         </div>
         <div class="stat-details">
-          <h3>Pending Requests</h3>
-          <p class="stat-number">{{ stats.pendingRequests }}</p>
+          <h3>Total Companies</h3>
+          <p class="stat-number">{{ stats.totalCompanies }}</p>
         </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon company" style="background: linear-gradient(135deg, #28a745, #20c997);">
-          <i class="fas fa-shield-alt"></i>
+        <div class="stat-icon warning">
+          <i class="fas fa-clock"></i>
         </div>
         <div class="stat-details">
-          <h3>System Health</h3>
-          <p class="stat-number">98%</p>
+          <h3>Pending Approvals</h3>
+          <p class="stat-number">{{ stats.pendingRequests }}</p>
         </div>
       </div>
     </div>
@@ -83,80 +75,128 @@
     <div class="actions-section">
       <h3>Quick Actions</h3>
       <div class="actions-grid">
-        <button class="action-btn company" type="button">
+        <button class="action-btn" (click)="loadAllUsers()">
           <i class="fas fa-users"></i>
-          Manage Users
+          Load All Users
         </button>
-        <button class="action-btn company" type="button">
-          <i class="fas fa-user-check"></i>
-          Vendor Approvals
+        <button class="action-btn" (click)="loadVendors()">
+          <i class="fas fa-user-tie"></i>
+          Load Vendors
         </button>
-        <button class="action-btn company" type="button">
-          <i class="fas fa-file-invoice-dollar"></i>
-          View Transactions
+        <button class="action-btn" (click)="loadCompanies()">
+          <i class="fas fa-building"></i>
+          Load Companies
+        </button>
+        <button class="action-btn" (click)="loadPendingApprovals()">
+          <i class="fas fa-clock"></i>
+          Load Pending
+        </button>
+        <button class="action-btn" (click)="refreshData()">
+          <i class="fas fa-sync-alt"></i>
+          Refresh Data
+        </button>
+        <button class="action-btn" (click)="exportData()">
+          <i class="fas fa-download"></i>
+          Export Data
         </button>
       </div>
     </div>
 
-    <!-- Pending Vendor Approvals -->
-    <div class="requests-section" style="margin-top: 30px;">
-      <h3>Pending Vendor Approvals</h3>
-      <div class="requests-table" *ngIf="vendors.length > 0; else noVendors">
-        <div class="request-card" *ngFor="let v of vendors">
-          <div class="request-header">
-            <div class="request-title">
-              <h4>{{ v.companyName }}</h4>
-              <span class="status-badge status-pending">
-                <i class="fas fa-clock"></i>
-                Pending
-              </span>
-            </div>
-            <span class="request-date">{{ v.createdAt || '' }}</span>
+    <!-- Recent Activities -->
+    <div class="activities-section" *ngIf="recentActivities.length > 0">
+      <h3>Recent Activities</h3>
+      <div class="activities-list">
+        <div class="activity-item" *ngFor="let activity of recentActivities | slice:0:5">
+          <div class="activity-icon" [class.success]="activity.action === 'registered'" [class.pending]="activity.action === 'pending_verification'">
+            <i class="fas" [class.fa-check-circle]="activity.action === 'registered'" [class.fa-clock]="activity.action === 'pending_verification'"></i>
           </div>
-          <div class="request-details">
-            <div class="detail-item">
-              <i class="fas fa-user-tie"></i>
-              <span>{{ v.firstName }} {{ v.lastName }}</span>
-            </div>
-            <div class="detail-item">
-              <i class="fas fa-envelope"></i>
-              <span>{{ v.email }}</span>
-            </div>
+          <div class="activity-details">
+            <p class="activity-text">{{ activity.description }}</p>
+            <span class="activity-time">{{ activity.timestamp | date:'short' }}</span>
           </div>
+          <span class="activity-badge" [class.badge-success]="activity.action === 'registered'" [class.badge-pending]="activity.action === 'pending_verification'">
+            {{ activity.action === 'registered' ? 'Completed' : 'Pending' }}
+          </span>
         </div>
       </div>
-      <ng-template #noVendors>
-        <p class="no-data">
-          <i class="fas fa-info-circle"></i>
-          No pending vendor approvals.
-        </p>
-      </ng-template>
     </div>
 
-    <!-- Recent Activity -->
-    <div class="requests-section" style="margin-top: 30px;">
-      <h3>Recent Activity</h3>
-      <div class="requests-table" *ngIf="companies.length > 0; else noActivity">
-        <div class="request-card" *ngFor="let c of companies | slice:0:3">
-          <div class="request-header">
-            <div class="request-title">
-              <h4>New company registered: {{ c.companyName }}</h4>
-            </div>
-          </div>
-          <div class="request-details">
-            <div class="detail-item">
-              <i class="fas fa-envelope"></i>
-              <span>{{ c.email }}</span>
-            </div>
+    <!-- Users Management Section -->
+    <div class="users-section">
+        <div class="table-header">
+          <h3 class="card-title">User Management</h3>
+          <div class="table-tabs">
+            <button class="tab-btn" [class.active]="activeTab === 'all'" (click)="setActiveTab('all')">All Users ({{ stats.totalUsers }})</button>
+            <button class="tab-btn" [class.active]="activeTab === 'vendors'" (click)="setActiveTab('vendors')">Vendors ({{ stats.totalVendors }})</button>
+            <button class="tab-btn" [class.active]="activeTab === 'companies'" (click)="setActiveTab('companies')">Companies ({{ stats.totalCompanies }})</button>
+            <button class="tab-btn" [class.active]="activeTab === 'pending'" (click)="setActiveTab('pending')">Pending ({{ stats.pendingRequests }})</button>
           </div>
         </div>
-      </div>
-      <ng-template #noActivity>
-        <p class="no-data">
-          <i class="fas fa-info-circle"></i>
-          No recent activity yet.
-        </p>
-      </ng-template>
+
+        <div class="table-container">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Contact</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of getFilteredUsers()" class="table-row">
+                <td>{{ user.id }}</td>
+                <td>
+                  <div class="user-cell">
+                    <div class="user-avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
+                    <span>{{ user.name }}</span>
+                  </div>
+                </td>
+                <td>{{ user.mail }}</td>
+                <td>
+                  <span class="role-badge" [class.vendor]="user.role === 'vendor'" [class.company]="user.role === 'company'" [class.admin]="user.role === 'admin'">
+                    {{ user.role }}
+                  </span>
+                </td>
+                <td>{{ user.contactNo || 'N/A' }}</td>
+                <td>
+                  <span class="status-badge" [class.verified]="user.isVerified" [class.pending]="!user.isVerified">
+                    {{ user.isVerified ? 'Verified' : 'Pending' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-btns">
+                    <button class="icon-btn" (click)="viewUser(user)" title="View">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="icon-btn" (click)="approveUser(user)" *ngIf="!user.isVerified" title="Approve">
+                      <i class="fas fa-check"></i>
+                    </button>
+                    <button class="icon-btn danger" (click)="deleteUser(user)" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="no-data" *ngIf="getFilteredUsers().length === 0">
+            <i class="fas fa-inbox"></i>
+            <p>No users found</p>
+          </div>
+        </div>
+
+        <!-- Load More Button -->
+        <div class="load-more-section" *ngIf="getFilteredUsers().length > 0 && hasMoreData">
+          <button class="load-more-btn" (click)="loadMoreUsers()" [disabled]="isLoading">
+            <i class="fas" [class.fa-spinner]="isLoading" [class.fa-spin]="isLoading" [class.fa-arrow-down]="!isLoading"></i>
+            {{ isLoading ? 'Loading...' : 'Load More Users' }}
+          </button>
+        </div>
     </div>
   </main>
 </div>

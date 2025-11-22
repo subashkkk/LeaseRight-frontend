@@ -171,7 +171,7 @@
               placeholder="Enter password (min 8 characters)"
               [class.input-error]="password?.invalid && password?.touched">
             <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
-              <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              <i [class]="showPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
             </button>
           </div>
           <span class="error-message" *ngIf="password?.invalid && password?.touched">
@@ -196,7 +196,7 @@
               placeholder="Re-enter password"
               [class.input-error]="(confirmPassword?.invalid && confirmPassword?.touched) || (vendorSignupForm.errors?.['passwordMismatch'] && confirmPassword?.touched)">
             <button type="button" class="toggle-password" (click)="toggleConfirmPasswordVisibility()">
-              <i [class]="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              <i [class]="showConfirmPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
             </button>
           </div>
           <span class="error-message" *ngIf="confirmPassword?.invalid && confirmPassword?.touched">

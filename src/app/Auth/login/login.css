@@ -263,23 +263,67 @@
 
 .password-wrapper .form-input {
   width: 100%;
-  padding-right: 40px;
+  padding-right: 48px;
 }
 
 .password-toggle {
   position: absolute;
-  right: 12px;
-  background: none;
-  border: none;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
   cursor: pointer;
-  color: #757575;
+  color: #1a1a1a;
   font-size: 16px;
-  padding: 8px;
-  transition: color 0.2s ease;
+  padding: 0;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
 .password-toggle:hover {
-  color: #1a1a1a;
+  background: rgba(0, 0, 0, 0.12);
+  border-color: #1a1a1a;
+  color: #000000;
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.password-toggle:active {
+  transform: translateY(-50%) scale(0.98);
+}
+
+.password-toggle i {
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 900;
+  font-style: normal;
+  display: inline-block;
+}
+
+/* Animated Eye Icon - Default */
+.password-toggle i {
+  position: relative;
+  transition: transform 0.1s ease-out;
+}
+
+/* Eye-slash (closed) - NO animation, static */
+.password-toggle i.fa-eye-slash {
+  animation: none;
+  transform: none;
+}
+
+/* Eye (open) - Follows mouse pointer */
+.password-toggle i.fa-eye {
+  animation: none;
+  /* Transform will be set dynamically via JavaScript */
 }
 
 /* Password Label Wrapper */

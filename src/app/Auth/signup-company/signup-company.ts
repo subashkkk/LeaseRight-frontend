@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CompanyDataService } from '../../services/company-data.service';
 import { OtpService } from '../../services/otp.service';
+import { EyeTrackingService } from '../../services/eye-tracking.service';
 
 @Component({
   selector: 'app-signup-company',
@@ -24,11 +25,13 @@ export class SignupCompany implements OnInit {
     private fb: FormBuilder,
     private router: Router,
     private companyDataService: CompanyDataService,
-    private otpService: OtpService
+    private otpService: OtpService,
+    private eyeTrackingService: EyeTrackingService
   ) {}
 
   ngOnInit(): void {
     this.initializeForm();
+    this.eyeTrackingService.initEyeTracking();
   }
 
   initializeForm(): void {

@@ -1,40 +1,48 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../Auth/auth.service';
-import { LeaseRequestService, LeaseRequest, Vehicle } from '../../services/lease-request.service';
-import { ProfileDropdownComponent, ProfileMenuItem } from '../../shared/profile-dropdown/profile-dropdown.component';
-import { AccountDetailsComponent } from '../../shared/account-details/account-details.component';
+import { AdminService, AdminStats, UserActivity } from '../../services/admin.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, ProfileDropdownComponent, AccountDetailsComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './admin-dashboard.html',
-  styleUrls: ['./admin-dashboard.css'],
+  styleUrls: ['./admin-dashboard.css']
 })
 export class AdminDashboard implements OnInit {
-  userName: string = '';
-  showAccountDetails: boolean = false;
-  
-  // Profile menu items
-  profileMenuItems: ProfileMenuItem[] = [];
+  @ViewChild('chartCanvas') chartCanvas?: ElementRef<HTMLCanvasElement>;
 
-  stats: any = {
-    totalCompanies: 0,
+  userName: string = '';
+  searchQuery: string = '';
+  activeTab: string = 'all';
+  currentDate: string = '';
+  isLoading: boolean = false;
+  hasMoreData: boolean = false;
+  currentPage: number = 1;
+  pageSize: number = 10;
+  
+  stats: AdminStats = {
+    totalUsers: 0,
     totalVendors: 0,
-    totalRequests: 0,
+    totalCompanies: 0,
+    totalAdmins: 0,
     pendingRequests: 0,
+    systemHealth: 98
   };
 
-  companies: any[] = [];
+  allUsers: any[] = [];
   vendors: any[] = [];
-  recentRequests: LeaseRequest[] = [];
+  companies: any[] = [];
+  recentActivities: UserActivity[] = [];
+  chartData: any[] = [];
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private leaseService: LeaseRequestService
+    private adminService: AdminService
   ) {}
 
   ngOnInit(): void {
@@ -51,68 +59,256 @@ export class AdminDashboard implements OnInit {
     }
 
     this.userName = this.authService.getUserName() || 'System Admin';
+    this.currentDate = new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit' 
+    });
 
-    this.setupProfileMenu();
-    this.loadData();
+    this.loadDashboardData();
   }
 
-  loadData(): void {
-    // Companies and vendors from LocalStorage (same keys as AuthService)
-    this.companies = this.getStoredUsers('company_registrations');
-    this.vendors = this.getStoredUsers('vendor_registrations');
+  loadDashboardData(): void {
+    console.log('📊 Loading dashboard data...');
+    
+    this.adminService.getDashboardData().subscribe({
+      next: (data) => {
+        console.log('✅ Dashboard data loaded:', data);
+        this.stats = data.stats;
+        this.allUsers = this.sortUsersByRole(data.vendors.concat(data.companies));
+        this.vendors = data.vendors;
+        this.companies = data.companies;
+        this.recentActivities = data.recentActivities.slice(0, 10);
+      },
+      error: (error) => {
+        console.error('❌ Failed to load dashboard data:', error);
+        // Fallback to empty data
+        this.allUsers = [];
+        this.vendors = [];
+        this.companies = [];
+        this.recentActivities = [];
+      }
+    });
 
-    // Requests list (can be populated from LeaseRequestService when available)
-    this.recentRequests = [];
-
-    this.stats.totalCompanies = this.companies.length;
-    this.stats.totalVendors = this.vendors.length;
-    this.stats.totalRequests = this.recentRequests.length;
-    this.stats.pendingRequests = this.recentRequests.filter(r => r.status === 'pending').length;
+    // Load chart data
+    this.adminService.getChartData().subscribe({
+      next: (data) => {
+        this.chartData = data;
+      },
+      error: (error) => {
+        console.error('❌ Failed to load chart data:', error);
+      }
+    });
   }
 
-  private getStoredUsers(storageKey: string): any[] {
-    try {
-      const data = localStorage.getItem(storageKey);
-      return data ? JSON.parse(data) : [];
-    } catch (error) {
-      console.error(`Error reading ${storageKey}:`, error);
-      return [];
-    }
+  private sortUsersByRole(users: any[]): any[] {
+    // Sort: admin first, then company, then vendor
+    const roleOrder: { [key: string]: number } = { admin: 1, company: 2, vendor: 3 };
+    return users.sort((a, b) => (roleOrder[a.role] || 4) - (roleOrder[b.role] || 4));
   }
 
-  setupProfileMenu(): void {
-    this.profileMenuItems = [
-      { icon: 'fa-user-circle', label: 'Account Details', action: 'account' },
-      { icon: 'fa-building', label: 'Companies', action: 'companies', badge: this.stats.totalCompanies },
-      { icon: 'fa-truck', label: 'Vendors', action: 'vendors', badge: this.stats.totalVendors },
-      { icon: 'fa-clipboard-list', label: 'All Requests', action: 'requests', badge: this.stats.totalRequests }
-    ];
-  }
+  getFilteredUsers(): any[] {
+    let filtered = this.allUsers;
 
-  onProfileMenuClick(action: string): void {
-    // Close all sections first
-    this.showAccountDetails = false;
-
-    // Open requested section
-    switch (action) {
-      case 'account':
-        this.showAccountDetails = true;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Filter by tab
+    switch (this.activeTab) {
+      case 'vendors':
+        filtered = this.allUsers.filter(u => u.role === 'vendor');
         break;
       case 'companies':
-      case 'vendors':
-      case 'requests':
-        // Scroll to relevant section
-        window.scrollTo({ top: 600, behavior: 'smooth' });
+        filtered = this.allUsers.filter(u => u.role === 'company');
         break;
+      case 'pending':
+        filtered = this.allUsers.filter(u => !u.isVerified);
+        break;
+      default:
+        filtered = this.allUsers;
+    }
+
+    // Filter by search query
+    if (this.searchQuery && this.searchQuery.trim()) {
+      const query = this.searchQuery.toLowerCase();
+      filtered = filtered.filter(u => 
+        u.name?.toLowerCase().includes(query) ||
+        u.mail?.toLowerCase().includes(query) ||
+        u.role?.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  }
+
+  setActiveTab(tab: string): void {
+    this.activeTab = tab;
+  }
+
+  formatNumber(num: number): string {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  }
+
+  getProgressOffset(percentage: number): number {
+    const circumference = 2 * Math.PI * 90;
+    return circumference - (percentage / 100) * circumference;
+  }
+
+  viewUser(user: any): void {
+    console.log('👁️ View user:', user);
+    alert(`User Details:\nName: ${user.name}\nEmail: ${user.mail}\nRole: ${user.role}\nStatus: ${user.isVerified ? 'Verified' : 'Pending'}`);
+  }
+
+  approveUser(user: any): void {
+    if (confirm(`Approve user: ${user.name}?`)) {
+      console.log('✅ Approving user:', user.id);
+      
+      this.adminService.approveUser(user.id).subscribe({
+        next: (response) => {
+          console.log('✅ User approved:', response);
+          alert(`User ${user.name} has been approved!`);
+          this.loadDashboardData(); // Reload data
+        },
+        error: (error) => {
+          console.error('❌ Failed to approve user:', error);
+          alert('Failed to approve user. Please try again.');
+        }
+      });
     }
   }
 
-  closeAccountDetails(): void {
-    this.showAccountDetails = false;
+  deleteUser(user: any): void {
+    if (confirm(`Are you sure you want to delete user: ${user.name}?`)) {
+      console.log('🗑️ Deleting user:', user.id);
+      
+      this.adminService.deleteUser(user.id).subscribe({
+        next: (response) => {
+          console.log('✅ User deleted:', response);
+          alert(`User ${user.name} has been deleted!`);
+          this.loadDashboardData(); // Reload data
+        },
+        error: (error) => {
+          console.error('❌ Failed to delete user:', error);
+          alert('Failed to delete user. Please try again.');
+        }
+      });
+    }
   }
 
   logout(): void {
     this.authService.logout();
+  }
+
+  // Quick Action Methods
+  loadAllUsers(): void {
+    console.log('📥 Loading all users...');
+    this.isLoading = true;
+    this.activeTab = 'all';
+    this.loadDashboardData();
+  }
+
+  loadVendors(): void {
+    console.log('📥 Loading vendors...');
+    this.isLoading = true;
+    this.activeTab = 'vendors';
+    
+    this.adminService.getUsersByRole('vendor').subscribe({
+      next: (vendors) => {
+        this.vendors = vendors;
+        this.allUsers = [...this.allUsers.filter(u => u.role !== 'vendor'), ...vendors];
+        this.isLoading = false;
+        console.log('✅ Vendors loaded:', vendors.length);
+      },
+      error: (error) => {
+        console.error('❌ Failed to load vendors:', error);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  loadCompanies(): void {
+    console.log('📥 Loading companies...');
+    this.isLoading = true;
+    this.activeTab = 'companies';
+    
+    this.adminService.getUsersByRole('company').subscribe({
+      next: (companies) => {
+        this.companies = companies;
+        this.allUsers = [...this.allUsers.filter(u => u.role !== 'company'), ...companies];
+        this.isLoading = false;
+        console.log('✅ Companies loaded:', companies.length);
+      },
+      error: (error) => {
+        console.error('❌ Failed to load companies:', error);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  loadPendingApprovals(): void {
+    console.log('📥 Loading pending approvals...');
+    this.activeTab = 'pending';
+    // Filter will happen automatically via getFilteredUsers()
+  }
+
+  refreshData(): void {
+    console.log('🔄 Refreshing dashboard data...');
+    this.isLoading = true;
+    this.currentPage = 1;
+    this.loadDashboardData();
+    setTimeout(() => {
+      this.isLoading = false;
+      alert('Dashboard data refreshed!');
+    }, 1000);
+  }
+
+  exportData(): void {
+    console.log('💾 Exporting data...');
+    const users = this.getFilteredUsers();
+    
+    // Convert to CSV
+    const headers = ['ID', 'Name', 'Email', 'Role', 'Contact', 'Status'];
+    const csvData = users.map(u => [
+      u.id,
+      u.name,
+      u.mail,
+      u.role,
+      u.contactNo || 'N/A',
+      u.isVerified ? 'Verified' : 'Pending'
+    ]);
+    
+    const csv = [
+      headers.join(','),
+      ...csvData.map(row => row.join(','))
+    ].join('\n');
+    
+    // Download CSV
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `admin-users-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    console.log('✅ Data exported successfully');
+    alert(`Exported ${users.length} users to CSV`);
+  }
+
+  loadMoreUsers(): void {
+    if (this.isLoading) return;
+    
+    console.log('📥 Loading more users...');
+    this.isLoading = true;
+    this.currentPage++;
+    
+    // Simulate loading more data
+    setTimeout(() => {
+      this.isLoading = false;
+      // In a real app, you would fetch more data from the backend here
+      console.log('✅ More users loaded');
+    }, 1500);
   }
 }

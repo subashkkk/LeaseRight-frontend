@@ -64,10 +64,29 @@ export class VerifyOtp {
         this.router.navigate(['/auth/login']);
       }, 2000);
     } catch (e: any) {
-      console.error('OTP verification failed', e);
-      // Show the actual backend error message if available
-      if (e.error && typeof e.error === 'string') {
-        this.error = e.error;
+      console.error('OTP verification failed:', e);
+      
+      // Handle HttpErrorResponse properly
+      if (e.error) {
+        // If error is a string (backend sends plain text)
+        if (typeof e.error === 'string') {
+          this.error = e.error;
+        }
+        // If error is an object with a message property
+        else if (e.error.message && typeof e.error.message === 'string') {
+          this.error = e.error.message;
+        }
+        // If error is an object with an error property
+        else if (e.error.error && typeof e.error.error === 'string') {
+          this.error = e.error.error;
+        }
+        // Fallback to status text
+        else if (e.statusText) {
+          this.error = e.statusText;
+        }
+        else {
+          this.error = 'Invalid OTP. Please try again.';
+        }
       } else if (e.message) {
         this.error = e.message;
       } else {
@@ -88,14 +107,42 @@ export class VerifyOtp {
       return;
     }
 
+    console.log('📧 Resending OTP to:', this.email);
+    
     try {
       await this.otpService.resendOtp(this.email);
       this.message = 'A new OTP has been sent to your email.';
+      console.log('✅ OTP resent successfully');
     } catch (e: any) {
-      console.error('Error resending OTP', e);
-      // Show the actual backend error message if available
-      if (e.error && typeof e.error === 'string') {
-        this.error = e.error;
+      console.error('❌ Error resending OTP:', e);
+      console.error('Error structure:', {
+        error: e.error,
+        status: e.status,
+        statusText: e.statusText,
+        message: e.message
+      });
+      
+      // Handle HttpErrorResponse properly
+      if (e.error) {
+        // If error is a string (backend sends plain text)
+        if (typeof e.error === 'string') {
+          this.error = e.error;
+        }
+        // If error is an object with a message property
+        else if (e.error.message && typeof e.error.message === 'string') {
+          this.error = e.error.message;
+        }
+        // If error is an object with an error property
+        else if (e.error.error && typeof e.error.error === 'string') {
+          this.error = e.error.error;
+        }
+        // Fallback to status text
+        else if (e.statusText) {
+          this.error = e.statusText;
+        }
+        else {
+          this.error = 'Failed to resend OTP. Please try again.';
+        }
       } else if (e.message) {
         this.error = e.message;
       } else {

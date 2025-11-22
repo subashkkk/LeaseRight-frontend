@@ -70,6 +70,17 @@ export const API_CONFIG = {
     GET_ALL: '/lease-requests/all',                   // GET - Get all requests (for vendors)
     GET_BY_ID: '/lease-requests/:id',                 // GET - Get single request by ID
     GET_BY_COMPANY: '/lease-requests/company/:companyId'  // GET - Get requests by company ID
+  },
+
+  // Admin Endpoints
+  ADMIN: {
+    GET_ALL_USERS: '/allUsers',                       // GET - Get all users
+    GET_USER_BY_ID: '/getbyid/:id',                   // GET - Get user by ID
+    UPDATE_USER: '/updatebyid/:id',                   // PUT - Update user by ID
+    DELETE_USER: '/deletebyid/:id',                   // DELETE - Delete user by ID
+    GET_USER_BY_NAME: '/getbyname/:name',            // GET - Get user by name
+    DELETE_USER_BY_NAME: '/deletebyname/:name',      // DELETE - Delete user by name
+    GET_USERS_BY_ROLE: '/users/role/:role'           // GET - Get users filtered by role (will use findByRole)
   }
 };
 

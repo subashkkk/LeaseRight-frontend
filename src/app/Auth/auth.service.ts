@@ -31,9 +31,45 @@ export class AuthService {
 
   /**
    * Login with email and password
-   * Uses backend API if USE_BACKEND_API is true, otherwise uses LocalStorage
+   * Checks admin credentials first, then uses backend API for vendor/company
    */
   login(credentials: { email: string; password: string }): Observable<any> {
+    // ALWAYS check admin credentials first (locally stored)
+    const admin = this.ADMIN_USERS.find(a => 
+      a.email === credentials.email && a.password === credentials.password
+    );
+
+    if (admin) {
+      // Admin login successful - use local authentication
+      const response = {
+        success: true,
+        message: 'Admin login successful',
+        token: this.generateToken(admin.email),
+        user: {
+          id: 0, // Admin doesn't have a database ID
+          email: admin.email,
+          firstName: admin.firstName,
+          lastName: admin.lastName,
+          name: `${admin.firstName} ${admin.lastName}`,
+          companyName: 'LeaseRight Admin',
+          role: 'admin'
+        },
+        userRole: 'admin',
+        userName: `${admin.firstName} ${admin.lastName}`
+      };
+
+      // Store admin session
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('userRole', 'admin');
+      localStorage.setItem('userName', response.userName);
+      localStorage.setItem('userEmail', admin.email);
+
+      console.log('✅ Admin login successful:', admin.email);
+      return of(response).pipe(delay(500));
+    }
+
+    // Not admin, check backend for vendor/company users
     if (this.USE_BACKEND_API) {
       // Backend API login
       const url = getApiUrl(API_CONFIG.AUTH.LOGIN);

@@ -193,6 +193,64 @@ export class LeaseRequestService {
   }
 
   /**
+   * Update an existing lease request
+   */
+  updateLeaseRequest(requestId: number, requestData: Omit<LeaseRequest, 'status' | 'createdAt'>): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if (this.USE_BACKEND_API) {
+        // Backend API - Note: You may need to add UPDATE endpoint to backend
+        const url = `${getApiUrl(API_CONFIG.LEASE_REQUEST.CREATE)}/${requestId}`;
+        console.log('📝 Updating lease request via backend:', url);
+        
+        const backendData = {
+          vehicleType: requestData.vehicleType,
+          preferredModel: requestData.preferredModel || '',
+          leaseDuration: requestData.leaseDuration,
+          minBudget: requestData.minBudget,
+          maxBudget: requestData.maxBudget,
+          additionalRequirements: requestData.additionalRequirements || '',
+          companyId: requestData.companyId
+        };
+        
+        this.http.put(url, backendData).subscribe({
+          next: (response) => {
+            console.log('✅ Lease request updated:', response);
+            resolve(response);
+          },
+          error: (error) => {
+            console.error('❌ Error updating lease request:', error);
+            reject(error);
+          }
+        });
+      } else {
+        // LocalStorage fallback
+        try {
+          const requests = this.getAllLeaseRequestsLocal();
+          const index = requests.findIndex(r => r.id === requestId);
+          
+          if (index === -1) {
+            reject(new Error('Request not found'));
+            return;
+          }
+          
+          requests[index] = {
+            ...requests[index],
+            ...requestData,
+            id: requestId
+          };
+          
+          localStorage.setItem(this.REQUESTS_KEY, JSON.stringify(requests));
+          console.log('✅ Lease request updated (LocalStorage)');
+          resolve({ success: true, message: 'Request updated successfully' });
+        } catch (error) {
+          console.error('❌ Error updating request:', error);
+          reject(error);
+        }
+      }
+    });
+  }
+
+  /**
    * Get all lease requests from LocalStorage (for local testing)
    */
   private getAllLeaseRequestsLocal(): any[] {

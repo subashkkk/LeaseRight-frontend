@@ -41,8 +41,12 @@ export class CompanyDashboard implements OnInit {
   // Profile menu items
   profileMenuItems: ProfileMenuItem[] = [];
   
-  // UI State
+  // Create new lease request form
   showRequestForm: boolean = false;
+  isEditingRequest: boolean = false;
+  editingRequestId: number | null = null;
+  
+  // UI State
   
   // Data loaded flags
   myRequestsLoaded: boolean = false;
@@ -241,18 +245,28 @@ export class CompanyDashboard implements OnInit {
       return;
     }
 
-    // Validate budget range
-    const minBudget = this.requestForm.value.minBudget;
-    const maxBudget = this.requestForm.value.maxBudget;
-    
-    if (minBudget > maxBudget) {
+    if (this.requestForm.value.minBudget > this.requestForm.value.maxBudget) {
       this.errorMessage = 'Minimum budget cannot be greater than maximum budget';
+      return;
+    }
+
+    if (this.requestForm.value.leaseDuration < 1 || this.requestForm.value.leaseDuration > 60) {
+      this.errorMessage = 'Lease duration must be between 1 and 60 months';
       return;
     }
 
     this.isSubmitting = true;
     this.errorMessage = '';
 
+    // Check if we're editing or creating
+    if (this.isEditingRequest && this.editingRequestId) {
+      this.updateLeaseRequest();
+    } else {
+      this.createLeaseRequest();
+    }
+  }
+
+  createLeaseRequest(): void {
     // Prepare data matching backend LeaseRequestDTO
     const requestData: Omit<LeaseRequest, 'id' | 'status' | 'createdAt'> = {
       vehicleType: this.requestForm.value.vehicleType as VehicleType,
@@ -274,11 +288,11 @@ export class CompanyDashboard implements OnInit {
         this.isSubmitting = false;
         this.successMessage = 'Lease request submitted successfully! ✅';
         this.requestForm.reset({ leaseDuration: 12 });
+        this.isEditingRequest = false;
+        this.editingRequestId = null;
         
-        // Reload stats to update the counts (but not the detailed list)
+        // Reload stats and requests
         this.loadStats();
-        
-        // If detailed list was loaded, mark it as stale so user can reload
         if (this.myRequestsLoaded) {
           this.myRequestsLoaded = false;
         }
@@ -293,6 +307,62 @@ export class CompanyDashboard implements OnInit {
         this.errorMessage = error.error?.message || 'Failed to submit request. Please try again.';
         console.error('❌ Error submitting lease request:', error);
       });
+  }
+
+  editRequest(request: LeaseRequest): void {
+    console.log('✏️ Editing request:', request);
+    this.isEditingRequest = true;
+    this.editingRequestId = request.id || null;
+    
+    this.requestForm.patchValue({
+      vehicleType: request.vehicleType,
+      preferredModel: request.preferredModel || '',
+      leaseDuration: request.leaseDuration,
+      minBudget: request.minBudget,
+      maxBudget: request.maxBudget,
+      additionalRequirements: request.additionalRequirements || ''
+    });
+    
+    this.showRequestForm = true;
+    this.showActiveLeases = false;
+    this.showVendorQuotations = false;
+    
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+  }
+
+  updateLeaseRequest(): void {
+    const updatedData: Omit<LeaseRequest, 'status' | 'createdAt'> = {
+      id: this.editingRequestId!,
+      companyId: this.companyId,
+      vehicleType: this.requestForm.value.vehicleType,
+      preferredModel: this.requestForm.value.preferredModel || null,
+      leaseDuration: this.requestForm.value.leaseDuration,
+      minBudget: this.requestForm.value.minBudget,
+      maxBudget: this.requestForm.value.maxBudget,
+      additionalRequirements: this.requestForm.value.additionalRequirements || null
+    };
+
+    this.leaseService.updateLeaseRequest(this.editingRequestId!, updatedData).then(() => {
+      this.successMessage = 'Lease request updated successfully!';
+      this.requestForm.reset();
+      this.isSubmitting = false;
+      this.isEditingRequest = false;
+      this.editingRequestId = null;
+      
+      this.loadStats();
+      if (this.myRequestsLoaded) {
+        this.loadMyRequests();
+      }
+      
+      setTimeout(() => {
+        this.showRequestForm = false;
+        this.successMessage = '';
+      }, 2000);
+    }).catch((error: any) => {
+      console.error('Error updating lease request:', error);
+      this.errorMessage = error?.message || 'Failed to update lease request';
+      this.isSubmitting = false;
+    });
   }
 
   getStatusClass(status: string | undefined): string {

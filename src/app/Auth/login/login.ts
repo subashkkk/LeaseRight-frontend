@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../auth.service';
+import { EyeTrackingService } from '../../services/eye-tracking.service';
 import { slideInAnimation, fadeInAnimation } from '../auth.animations';
-import { TestCredentialsService } from '../../services/test-credentials.service';
 
 @Component({
   selector: 'app-login',
@@ -17,6 +17,8 @@ import { TestCredentialsService } from '../../services/test-credentials.service'
 export class Login implements OnInit {
   loginForm!: FormGroup;
   showPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
   isLoading = false;
   successMessage = '';
   errorMessage = '';
@@ -34,15 +36,12 @@ export class Login implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private testCredentials: TestCredentialsService
+    private eyeTrackingService: EyeTrackingService
   ) {}
 
   ngOnInit(): void {
     console.log('🔍 Login component ngOnInit called');
     console.log('📍 Current URL:', this.router.url);
-    
-    // Initialize test credentials for local development
-    this.testCredentials.initializeTestCredentials();
     
     // Check if user is already logged in
     const isAuth = this.authService.isAuthenticated();
@@ -87,6 +86,9 @@ export class Login implements OnInit {
     if (savedEmail) {
       this.loginForm.patchValue({ email: savedEmail, rememberMe: true });
     }
+
+    // Add mouse tracking for eye following cursor
+    this.eyeTrackingService.initEyeTracking();
   }
 
   get email() {
@@ -115,6 +117,14 @@ export class Login implements OnInit {
 
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
+  }
+
+  toggleNewPasswordVisibility(): void {
+    this.showNewPassword = !this.showNewPassword;
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 
   onSubmit(): void {

@@ -55,9 +55,17 @@ export class OtpService {
    */
   async resendOtp(email: string): Promise<void> {
     const url = getApiUrl(API_CONFIG.OTP.RESEND) + `?mail=${encodeURIComponent(email)}`;
-    await firstValueFrom(
-      this.http.get(url, { responseType: 'text' as 'json' })
-    );
+    console.log('📤 Resending OTP request to:', url);
+    
+    try {
+      const response = await firstValueFrom(
+        this.http.get(url, { responseType: 'text' as 'json' })
+      );
+      console.log('✅ Resend OTP response:', response);
+    } catch (error) {
+      console.error('❌ Resend OTP failed:', error);
+      throw error; // Re-throw to be handled by caller
+    }
   }
 
   clear(): void {
