@@ -5,11 +5,13 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { AuthService } from '../../Auth/auth.service';
 import { LeaseRequestService, LeaseRequest, Vehicle, VehicleType } from '../../services/lease-request.service';
 import { QuotationsComponent } from '../../company-dashboard/quotations/quotations';
+import { ProfileDropdownComponent, ProfileMenuItem } from '../../shared/profile-dropdown/profile-dropdown.component';
+import { AccountDetailsComponent } from '../../shared/account-details/account-details.component';
 
 @Component({
   selector: 'app-company-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, QuotationsComponent],
+  imports: [CommonModule, ReactiveFormsModule, QuotationsComponent, ProfileDropdownComponent, AccountDetailsComponent],
   templateUrl: './company-dashboard.html',
   styleUrl: './company-dashboard.css',
 })
@@ -29,14 +31,22 @@ export class CompanyDashboard implements OnInit {
 
   // Data
   myRequests: LeaseRequest[] = [];
-  availableVehicles: Vehicle[] = [];
+  activeLeases: any[] = [];  // Approved quotations
   
-  // Vendor quotations visibility
+  // Section visibility
   showVendorQuotations: boolean = false;
+  showActiveLeases: boolean = false;
+  showAccountDetails: boolean = false;
+  
+  // Profile menu items
+  profileMenuItems: ProfileMenuItem[] = [];
   
   // UI State
   showRequestForm: boolean = false;
-  showVehicleBrowser: boolean = false;
+  
+  // Data loaded flags
+  myRequestsLoaded: boolean = false;
+  activeLeasesLoaded: boolean = false;
   requestForm!: FormGroup;
   isSubmitting: boolean = false;
   successMessage: string = '';
@@ -69,14 +79,42 @@ export class CompanyDashboard implements OnInit {
     this.userName = this.authService.getUserName() || 'Company User';
     this.userEmail = user?.email || '';
     this.companyName = user?.companyName || '';
-    // For now, use a mock companyId (1). In production, this should come from backend after login
-    this.companyId = 1;
+    
+    // Get actual company ID from user data (from JWT token)
+    const userDataString = localStorage.getItem('user');
+    console.log('📦 Raw user data from localStorage:', userDataString);
+    
+    if (!userDataString) {
+      console.error('❌ CRITICAL: No user data in localStorage! User must login again.');
+      alert('Session expired. Please login again.');
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    const userData = JSON.parse(userDataString || '{}');
+    console.log('📦 Parsed user data:', userData);
+    console.log('📦 userData.id:', userData.id);
+    console.log('📦 typeof userData.id:', typeof userData.id);
+    
+    if (!userData.id) {
+      console.error('❌ CRITICAL: User data has no ID! userData:', userData);
+      alert('Invalid session data. Please login again.');
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    this.companyId = userData.id; // Use actual user ID as company ID (NO FALLBACK!)
+    console.log('🔑 Company ID set to:', this.companyId);
+    console.log('🔑 Company ID type:', typeof this.companyId);
 
     // Initialize form
     this.initializeRequestForm();
 
-    // Load data
-    this.loadDashboardData();
+    // Setup profile menu items
+    this.setupProfileMenu();
+
+    // Load stats immediately to show counts
+    this.loadStats();
   }
 
   initializeRequestForm(): void {
@@ -91,68 +129,110 @@ export class CompanyDashboard implements OnInit {
     });
   }
 
-  async loadDashboardData(): Promise<void> {
+  async loadStats(): Promise<void> {
     try {
-      // TEMPORARY: Show all requests since companyId is not associated yet
-      // TODO: Filter by actual companyId after login integration
-      console.log('🔄 Loading all requests (companyId not associated yet)...');
+      console.log(`🔄 Loading stats counts for company ID: ${this.companyId}...`);
+      const companyRequests = await this.leaseService.getRequestsByCompany(this.companyId);
       
-      const allRequests = await this.leaseService.getAllLeaseRequests();
-      this.myRequests = allRequests;
-      
-      // Calculate stats from all requests
+      // Calculate ONLY stats from the data - don't store the full data yet
       this.stats = {
-        total: allRequests.length,
-        pending: allRequests.filter(r => !r.status || r.status === 'pending').length,
-        approved: allRequests.filter(r => r.status === 'approved').length,
-        rejected: allRequests.filter(r => r.status === 'rejected').length
+        total: companyRequests.length,
+        pending: companyRequests.filter(r => !r.status || r.status === 'pending').length,
+        approved: companyRequests.filter(r => r.status === 'approved').length,
+        rejected: companyRequests.filter(r => r.status === 'rejected').length
       };
-
-      // Load available vehicles (still using localStorage for now)
-      this.availableVehicles = this.leaseService.getAvailableVehicles();
       
-      console.log('✅ Dashboard data loaded:', {
-        stats: this.stats,
-        requests: this.myRequests.length,
-        vehicles: this.availableVehicles.length,
-        requestDetails: this.myRequests
+      console.log('✅ Stats counts loaded:', this.stats);
+      console.log('📊 Stats boxes will display:', {
+        Total: this.stats.total,
+        Pending: this.stats.pending,
+        Approved: this.stats.approved,
+        Rejected: this.stats.rejected
       });
-    } catch (error) {
-      console.error('❌ Error loading dashboard data:', error);
+    } catch (error: any) {
+      console.error('❌ Error loading stats:', error);
       this.stats = { total: 0, pending: 0, approved: 0, rejected: 0 };
-      this.myRequests = [];
-      this.availableVehicles = [];
     }
   }
 
-  toggleRequestForm(): void {
+  async loadMyRequests(): Promise<void> {
+    // If detailed data already loaded, just return
+    if (this.myRequestsLoaded) {
+      console.log('✅ Detailed requests already loaded');
+      return;
+    }
+    
+    try {
+      console.log(`🔄 Loading detailed request list for company ID: ${this.companyId}...`);
+      const companyRequests = await this.leaseService.getRequestsByCompany(this.companyId);
+      this.myRequests = companyRequests;
+      this.myRequestsLoaded = true;
+      
+      console.log('✅ Detailed request list loaded:', this.myRequests.length, 'items');
+    } catch (error: any) {
+      console.error('❌ Error loading detailed requests:', error);
+      this.myRequests = [];
+      alert(`Error loading requests: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
+  unloadMyRequests(): void {
+    this.myRequests = [];
+    this.myRequestsLoaded = false;
+    console.log('🗑️ Detailed requests unloaded');
+  }
+
+  async loadActiveLeases(): Promise<void> {
+    if (this.activeLeasesLoaded) return; // Already loaded
+    
+    try {
+      console.log('🔄 Loading active leases (approved quotations)...');
+      // Load approved quotations from your quotations service
+      // For now, this is a placeholder - you'll need to implement the actual API call
+      // TODO: Replace with actual API call to get approved quotations
+      this.activeLeases = [];
+      this.activeLeasesLoaded = true;
+      console.log('✅ Active leases loaded:', this.activeLeases.length);
+    } catch (error: any) {
+      console.error('❌ Error loading active leases:', error);
+      this.activeLeases = [];
+      alert(`Error loading active leases: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
+  // Quotations now load inside the quotations component itself via button click
+
+  async toggleRequestForm(): Promise<void> {
     this.showRequestForm = !this.showRequestForm;
-    this.showVehicleBrowser = false;
+    this.showActiveLeases = false;
     this.showVendorQuotations = false;
     this.successMessage = '';
     this.errorMessage = '';
+    
     if (this.showRequestForm) {
       this.requestForm.reset({
         leaseDuration: 12
       });
-      // Scroll to top when opening form
       window.scrollTo(0, 0);
     }
   }
 
-  toggleVehicleBrowser(): void {
-    this.showVehicleBrowser = !this.showVehicleBrowser;
+  async toggleActiveLeases(): Promise<void> {
+    this.showActiveLeases = !this.showActiveLeases;
     this.showRequestForm = false;
     this.showVendorQuotations = false;
+    
+    // Load data only when opening the section
+    if (this.showActiveLeases) {
+      await this.loadActiveLeases();
+    }
   }
 
   toggleVendorQuotations(): void {
     this.showVendorQuotations = !this.showVendorQuotations;
-    // Hide other sections when showing quotations
-    if (this.showVendorQuotations) {
-      this.showRequestForm = false;
-      this.showVehicleBrowser = false;
-    }
+    this.showRequestForm = false;
+    this.showActiveLeases = false;
+    // Quotations component handles its own loading via button click
   }
 
   submitLeaseRequest(): void {
@@ -181,8 +261,7 @@ export class CompanyDashboard implements OnInit {
       minBudget: this.requestForm.value.minBudget,
       maxBudget: this.requestForm.value.maxBudget,
       additionalRequirements: this.requestForm.value.additionalRequirements || undefined,
-      // Don't send companyId if it's mock/test data (0 or 1)
-      // companyId: this.companyId,
+      companyId: this.companyId,  // Send actual company ID from JWT token
       // Additional fields for localStorage display
       companyEmail: this.userEmail,
       companyName: this.companyName
@@ -195,7 +274,14 @@ export class CompanyDashboard implements OnInit {
         this.isSubmitting = false;
         this.successMessage = 'Lease request submitted successfully! ✅';
         this.requestForm.reset({ leaseDuration: 12 });
-        this.loadDashboardData();
+        
+        // Reload stats to update the counts (but not the detailed list)
+        this.loadStats();
+        
+        // If detailed list was loaded, mark it as stale so user can reload
+        if (this.myRequestsLoaded) {
+          this.myRequestsLoaded = false;
+        }
         
         setTimeout(() => {
           this.showRequestForm = false;
@@ -223,6 +309,45 @@ export class CompanyDashboard implements OnInit {
       case 'rejected': return 'fa-times-circle';
       default: return 'fa-clock';
     }
+  }
+
+  setupProfileMenu(): void {
+    this.profileMenuItems = [
+      { icon: 'fa-user-circle', label: 'Account Details', action: 'account' },
+      { icon: 'fa-file-contract', label: 'Lease Requests', action: 'requests', badge: this.stats.total },
+      { icon: 'fa-car', label: 'My Leases', action: 'leases', badge: this.activeLeases.length },
+      { icon: 'fa-file-invoice', label: 'Quotations', action: 'quotations' }
+    ];
+  }
+
+  onProfileMenuClick(action: string): void {
+    // Close all sections first
+    this.showAccountDetails = false;
+    this.showRequestForm = false;
+    this.showActiveLeases = false;
+    this.showVendorQuotations = false;
+
+    // Open requested section
+    switch (action) {
+      case 'account':
+        this.showAccountDetails = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        break;
+      case 'requests':
+        this.loadMyRequests();
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        break;
+      case 'leases':
+        this.toggleActiveLeases();
+        break;
+      case 'quotations':
+        this.toggleVendorQuotations();
+        break;
+    }
+  }
+
+  closeAccountDetails(): void {
+    this.showAccountDetails = false;
   }
 
   logout(): void {

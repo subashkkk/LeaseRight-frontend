@@ -10,8 +10,8 @@ import { API_CONFIG, getApiUrl } from '../config/api.config';
 })
 export class AuthService {
   // Toggle between backend API and LocalStorage  
-  // Keep false: Backend login endpoint not implemented yet, using test credentials
-  private USE_BACKEND_API = false; // Set to true to use your backend
+  // Set to true to use real backend with BCrypt password validation
+  private USE_BACKEND_API = true; // Backend login is now working!
   
   private readonly VENDOR_STORAGE_KEY = 'vendor_registrations';
   private readonly COMPANY_STORAGE_KEY = 'company_registrations';
@@ -39,26 +39,48 @@ export class AuthService {
       const url = getApiUrl(API_CONFIG.AUTH.LOGIN);
       console.log('🔐 Logging in via backend API:', url);
       
-      return this.http.post(url, credentials).pipe(
+      // Backend expects 'mail' not 'email'
+      const backendCredentials = {
+        mail: credentials.email,
+        password: credentials.password
+      };
+      
+      return this.http.post(url, backendCredentials).pipe(
         map((response: any) => {
           console.log('✅ Backend login successful:', response);
           
-          // Store authentication data
-          if (response.token) {
-            localStorage.setItem('authToken', response.token);
+          // Backend response format: { success, message, userInfo: { id, name, mail, role, contactNo }, token }
+          if (response.success && response.userInfo && response.token) {
+            // Use the REAL JWT token from backend (not fake generated one)
+            const jwtToken = response.token;
+            localStorage.setItem('authToken', jwtToken);
+            
+            // Store user data
+            localStorage.setItem('user', JSON.stringify(response.userInfo));
+            localStorage.setItem('userRole', response.userInfo.role);
+            localStorage.setItem('userName', response.userInfo.name);
+            localStorage.setItem('userEmail', response.userInfo.mail);
+            
+            // Return formatted response for frontend compatibility
+            return {
+              success: response.success,
+              message: response.message,
+              token: jwtToken,
+              user: {
+                id: response.userInfo.id,  // ← CRITICAL: Include user ID!
+                email: response.userInfo.mail,
+                firstName: response.userInfo.name.split(' ')[0],
+                lastName: response.userInfo.name.split(' ').slice(1).join(' ') || '',
+                name: response.userInfo.name,
+                role: response.userInfo.role,
+                contactNo: response.userInfo.contactNo
+              },
+              userRole: response.userInfo.role,
+              userName: response.userInfo.name
+            };
+          } else {
+            throw new Error(response.message || 'Login failed');
           }
-          if (response.user) {
-            localStorage.setItem('user', JSON.stringify(response.user));
-          }
-          if (response.userRole) {
-            localStorage.setItem('userRole', response.userRole);
-          }
-          if (response.userName || (response.user && response.user.firstName)) {
-            const userName = response.userName || `${response.user.firstName} ${response.user.lastName}`;
-            localStorage.setItem('userName', userName);
-          }
-          
-          return response;
         }),
         catchError(error => {
           console.error('❌ Backend login failed:', error);
@@ -235,5 +257,91 @@ export class AuthService {
 
   getUserName(): string | null {
     return localStorage.getItem('userName');
+  }
+
+  /**
+   * Update user profile
+   * Uses backend API if USE_BACKEND_API is true, otherwise updates localStorage
+   */
+  updateProfile(profileData: any): Observable<any> {
+    if (this.USE_BACKEND_API) {
+      // Get user ID from stored user data
+      const currentUser = this.getUser();
+      const userId = currentUser?.id;
+      
+      if (!userId) {
+        console.error('❌ No user ID found for profile update');
+        return throwError(() => new Error('User ID not found'));
+      }
+      
+      // Replace :id in URL with actual user ID
+      const endpoint = API_CONFIG.USER.UPDATE_PROFILE.replace(':id', userId.toString());
+      const url = getApiUrl(endpoint);
+      
+      console.log('📝 Updating user profile via backend API:', url);
+      console.log('📦 Profile data:', profileData);
+      
+      return this.http.put(url, profileData).pipe(
+        catchError(error => {
+          console.error('❌ Backend profile update failed:', error);
+          console.error('❌ Error details:', error.error);
+          return throwError(() => error);
+        })
+      );
+    } else {
+      // LocalStorage fallback
+      try {
+        const currentUser = this.getUser();
+        const updatedUser = { ...currentUser, ...profileData };
+        this.setUser(updatedUser);
+        console.log('✅ Profile updated (LocalStorage):', updatedUser);
+        return of({ success: true, message: 'Profile updated successfully', data: updatedUser });
+      } catch (error) {
+        console.error('❌ Error updating profile:', error);
+        return throwError(() => error);
+      }
+    }
+  }
+
+  /**
+   * Get user profile from backend
+   */
+  getProfile(): Observable<any> {
+    if (this.USE_BACKEND_API) {
+      // Get user ID from stored user data
+      const currentUser = this.getUser();
+      const userId = currentUser?.id;
+      
+      if (!userId) {
+        console.warn('⚠️ No user ID found, returning localStorage data');
+        return of(currentUser);
+      }
+      
+      // Replace :id in URL with actual user ID
+      const endpoint = API_CONFIG.USER.GET_PROFILE.replace(':id', userId.toString());
+      const url = getApiUrl(endpoint);
+      
+      console.log('📥 Fetching user profile from backend:', url);
+      console.log('🔑 User ID:', userId);
+      
+      return this.http.get(url).pipe(
+        map((response: any) => {
+          console.log('✅ Profile fetched from backend:', response);
+          return response;
+        }),
+        catchError(error => {
+          console.error('❌ Failed to fetch profile from backend:', error);
+          console.error('❌ Error details:', error.error);
+          console.warn('⚠️ Falling back to localStorage data');
+          // Return localStorage data as fallback
+          return of(currentUser);
+        })
+      );
+    } else {
+      // LocalStorage fallback
+      const user = this.getUser();
+      console.log('📦 Returning profile from localStorage:', user);
+      return of(user);
+    }
   }
 }

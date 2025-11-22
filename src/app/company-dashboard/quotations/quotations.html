@@ -219,15 +219,32 @@
     <!-- Empty State -->
     <div *ngIf="filteredQuotations.length === 0" class="empty-state">
       <div class="empty-icon">📋</div>
-      <h3>No quotations found</h3>
-      <p>There are no quotations matching your current filters.</p>
-      <button 
-        *ngIf="searchTerm || statusFilter !== 'all'" 
-        (click)="searchTerm = ''; statusFilter = 'all'; applyFilters()"
-        class="btn btn-primary"
-      >
-        Clear Filters
-      </button>
+      
+      <!-- Not loaded yet -->
+      <div *ngIf="!dataLoaded">
+        <h3>Quotation Details</h3>
+        <p>Click the button below to load quotations from vendors.</p>
+        <button 
+          (click)="loadQuotations()"
+          class="btn btn-primary"
+        >
+          <span>🔄</span> Load Quotations
+        </button>
+      </div>
+      
+      <!-- Data loaded but empty or filtered -->
+      <div *ngIf="dataLoaded">
+        <h3>No quotations found</h3>
+        <p *ngIf="searchTerm || statusFilter !== 'all'">There are no quotations matching your current filters.</p>
+        <p *ngIf="!searchTerm && statusFilter === 'all'">No quotations available at the moment.</p>
+        <button 
+          *ngIf="searchTerm || statusFilter !== 'all'" 
+          (click)="searchTerm = ''; statusFilter = 'all'; applyFilters()"
+          class="btn btn-primary"
+        >
+          Clear Filters
+        </button>
+      </div>
     </div>
   </div>
 

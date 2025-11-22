@@ -9,15 +9,11 @@ export const API_CONFIG = {
   
   // Auth Endpoints
   AUTH: {
-    LOGIN: '/user/login',
+    LOGIN: '/users/login',
     SIGNUP: '/users/addNewUser',
-    LOGOUT: '/user/logout',
-    REFRESH_TOKEN: '/user/refresh-token',
-    VERIFY_TOKEN: '/user/verify-token',
-
-    // Forgot Password / Reset Password
-    FORGOT_PASSWORD: '/forgot-password',   // POST { mail }
-    RESET_PASSWORD: '/reset-password'      // POST { mail, otp, newPassword }
+    LOGOUT: '/users/logout',
+    REFRESH_TOKEN: '/users/refresh-token',
+    VERIFY_TOKEN: '/users/verify-token'
   },
 
   // OTP Endpoints - User Registration with OTP
@@ -27,6 +23,14 @@ export const API_CONFIG = {
     RESEND: '/resend-otp'        // GET - Resend OTP to email
   },
   
+  // User Profile Endpoints
+  USER: {
+    GET_PROFILE: '/users/getUserById/:id',      // GET - Get user by ID
+    UPDATE_PROFILE: '/users/updateUserById/:id', // PUT - Update user by ID
+    CHANGE_PASSWORD: '/users/change-password',
+    GET_CURRENT_USER: '/users/me'               // GET - Get current authenticated user
+  },
+
   // Vendor Endpoints
   VENDOR: {
     REGISTER: '/vendor/register',

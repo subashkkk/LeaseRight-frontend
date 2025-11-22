@@ -3,16 +3,22 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../Auth/auth.service';
 import { LeaseRequestService, LeaseRequest, Vehicle } from '../../services/lease-request.service';
+import { ProfileDropdownComponent, ProfileMenuItem } from '../../shared/profile-dropdown/profile-dropdown.component';
+import { AccountDetailsComponent } from '../../shared/account-details/account-details.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ProfileDropdownComponent, AccountDetailsComponent],
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.css'],
 })
 export class AdminDashboard implements OnInit {
   userName: string = '';
+  showAccountDetails: boolean = false;
+  
+  // Profile menu items
+  profileMenuItems: ProfileMenuItem[] = [];
 
   stats: any = {
     totalCompanies: 0,
@@ -46,6 +52,7 @@ export class AdminDashboard implements OnInit {
 
     this.userName = this.authService.getUserName() || 'System Admin';
 
+    this.setupProfileMenu();
     this.loadData();
   }
 
@@ -71,6 +78,38 @@ export class AdminDashboard implements OnInit {
       console.error(`Error reading ${storageKey}:`, error);
       return [];
     }
+  }
+
+  setupProfileMenu(): void {
+    this.profileMenuItems = [
+      { icon: 'fa-user-circle', label: 'Account Details', action: 'account' },
+      { icon: 'fa-building', label: 'Companies', action: 'companies', badge: this.stats.totalCompanies },
+      { icon: 'fa-truck', label: 'Vendors', action: 'vendors', badge: this.stats.totalVendors },
+      { icon: 'fa-clipboard-list', label: 'All Requests', action: 'requests', badge: this.stats.totalRequests }
+    ];
+  }
+
+  onProfileMenuClick(action: string): void {
+    // Close all sections first
+    this.showAccountDetails = false;
+
+    // Open requested section
+    switch (action) {
+      case 'account':
+        this.showAccountDetails = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        break;
+      case 'companies':
+      case 'vendors':
+      case 'requests':
+        // Scroll to relevant section
+        window.scrollTo({ top: 600, behavior: 'smooth' });
+        break;
+    }
+  }
+
+  closeAccountDetails(): void {
+    this.showAccountDetails = false;
   }
 
   logout(): void {
