@@ -15,10 +15,30 @@ export class VehicleDetailsComponent {
   details: VehicleDetailsForm = {
     registrationNumber: '',
     ownerName: '',
-    make: null,
-    model: null,
-    fuelType: null,
-    registrationDate: null
+    make: '',
+    model: '',
+    fuelType: '',
+    registrationDate: '',
+
+    brandName: '',
+    brandModel: '',
+    isFinanced: '',
+    manufacturingDate: '',
+    blacklistStatus: '',
+    financer: '',
+    bodyType: '',
+    color: '',
+    rcStatus: '',
+    fitUpto: '',
+    taxUpto: '',
+    category: '',
+    insuranceCompany: '',
+    insurancePolicy: '',
+    insuranceExpiry: '',
+    chasisNumber: '',
+    ownerCount: '',
+    seatingCapacity: '',
+    licensePlate: ''
   };
 
   errorMessage = '';
@@ -29,12 +49,34 @@ export class VehicleDetailsComponent {
   ) {
     const existing = this.flow.getDetails();
     if (existing) {
-      this.details = { ...existing };
-      // Convert nulls to empty strings for easier editing
-      this.details.make = existing.make || '';
-      this.details.model = existing.model || '';
-      this.details.fuelType = existing.fuelType || '';
-      this.details.registrationDate = existing.registrationDate || '';
+      this.details = {
+        registrationNumber: existing.registrationNumber || '',
+        ownerName: existing.ownerName || '',
+        make: existing.make || '',
+        model: existing.model || '',
+        fuelType: existing.fuelType || '',
+        registrationDate: existing.registrationDate || '',
+
+        brandName: existing.brandName || '',
+        brandModel: existing.brandModel || '',
+        isFinanced: existing.isFinanced || '',
+        manufacturingDate: existing.manufacturingDate || '',
+        blacklistStatus: existing.blacklistStatus || '',
+        financer: existing.financer || '',
+        bodyType: existing.bodyType || '',
+        color: existing.color || '',
+        rcStatus: existing.rcStatus || '',
+        fitUpto: existing.fitUpto || '',
+        taxUpto: existing.taxUpto || '',
+        category: existing.category || '',
+        insuranceCompany: existing.insuranceCompany || '',
+        insurancePolicy: existing.insurancePolicy || '',
+        insuranceExpiry: existing.insuranceExpiry || '',
+        chasisNumber: existing.chasisNumber || '',
+        ownerCount: existing.ownerCount || '',
+        seatingCapacity: existing.seatingCapacity || '',
+        licensePlate: existing.licensePlate || ''
+      };
     }
   }
 

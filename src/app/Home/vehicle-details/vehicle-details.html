@@ -24,27 +24,115 @@
       <div class="form-grid">
         <div class="form-group">
           <label>Registration Number<span class="required">*</span></label>
-          <input class="form-input" [(ngModel)]="details.registrationNumber" />
+          <input class="form-input" [(ngModel)]="details.registrationNumber" readonly />
         </div>
         <div class="form-group">
           <label>Owner Name<span class="required">*</span></label>
-          <input class="form-input" [(ngModel)]="details.ownerName" />
+          <input class="form-input" [(ngModel)]="details.ownerName" readonly />
+        </div>
+
+        <div class="form-group">
+          <label>Brand Name</label>
+          <input class="form-input" [(ngModel)]="details.brandName" readonly />
         </div>
         <div class="form-group">
+          <label>Brand Model</label>
+          <input class="form-input" [(ngModel)]="details.brandModel" readonly />
+        </div>
+
+        <div class="form-group">
           <label>Make</label>
-          <input class="form-input" [(ngModel)]="details.make" />
+          <input class="form-input" [(ngModel)]="details.make" readonly />
         </div>
         <div class="form-group">
           <label>Model</label>
-          <input class="form-input" [(ngModel)]="details.model" />
+          <input class="form-input" [(ngModel)]="details.model" readonly />
         </div>
+
         <div class="form-group">
           <label>Fuel Type</label>
-          <input class="form-input" [(ngModel)]="details.fuelType" />
+          <input class="form-input" [(ngModel)]="details.fuelType" readonly />
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <input class="form-input" [(ngModel)]="details.color" />
+        </div>
+
+        <div class="form-group">
+          <label>Manufacturing Date</label>
+          <input type="date" class="form-input" [(ngModel)]="details.manufacturingDate" readonly />
         </div>
         <div class="form-group">
           <label>Registration Date</label>
-          <input type="date" class="form-input" [(ngModel)]="details.registrationDate" />
+          <input type="date" class="form-input" [(ngModel)]="details.registrationDate" readonly />
+        </div>
+
+        <div class="form-group">
+          <label>RC Status</label>
+          <input class="form-input" [(ngModel)]="details.rcStatus" readonly />
+        </div>
+        <div class="form-group">
+          <label>Blacklist Status</label>
+          <input class="form-input" [(ngModel)]="details.blacklistStatus" readonly />
+        </div>
+
+        <div class="form-group">
+          <label>Fit Upto</label>
+          <input type="date" class="form-input" [(ngModel)]="details.fitUpto" readonly />
+        </div>
+        <div class="form-group">
+          <label>Tax Upto</label>
+          <input type="date" class="form-input" [(ngModel)]="details.taxUpto" readonly />
+        </div>
+
+        <div class="form-group">
+          <label>Category</label>
+          <input class="form-input" [(ngModel)]="details.category" readonly />
+        </div>
+        <div class="form-group">
+          <label>Body Type</label>
+          <input class="form-input" [(ngModel)]="details.bodyType" readonly />
+        </div>
+
+        <div class="form-group">
+          <label>Insurance Company</label>
+          <input class="form-input" [(ngModel)]="details.insuranceCompany" readonly />
+        </div>
+        <div class="form-group">
+          <label>Insurance Policy</label>
+          <input class="form-input" [(ngModel)]="details.insurancePolicy" readonly />
+        </div>
+
+        <div class="form-group">
+          <label>Insurance Expiry</label>
+          <input type="date" class="form-input" [(ngModel)]="details.insuranceExpiry" readonly />
+        </div>
+        <div class="form-group">
+          <label>Financer</label>
+          <input class="form-input" [(ngModel)]="details.financer" readonly />
+        </div>
+
+        <div class="form-group">
+          <label>Is Financed</label>
+          <input class="form-input" [(ngModel)]="details.isFinanced" readonly />
+        </div>
+        <div class="form-group">
+          <label>Chassis Number</label>
+          <input class="form-input" [(ngModel)]="details.chasisNumber" readonly />
+        </div>
+
+        <div class="form-group">
+          <label>License Plate</label>
+          <input class="form-input" [(ngModel)]="details.licensePlate" readonly />
+        </div>
+        <div class="form-group">
+          <label>Owner Count</label>
+          <input type="number" class="form-input" [(ngModel)]="details.ownerCount" />
+        </div>
+
+        <div class="form-group">
+          <label>Seating Capacity</label>
+          <input type="number" class="form-input" [(ngModel)]="details.seatingCapacity" />
         </div>
       </div>
 
