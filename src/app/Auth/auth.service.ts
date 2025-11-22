@@ -258,4 +258,90 @@ export class AuthService {
   getUserName(): string | null {
     return localStorage.getItem('userName');
   }
+
+  /**
+   * Update user profile
+   * Uses backend API if USE_BACKEND_API is true, otherwise updates localStorage
+   */
+  updateProfile(profileData: any): Observable<any> {
+    if (this.USE_BACKEND_API) {
+      // Get user ID from stored user data
+      const currentUser = this.getUser();
+      const userId = currentUser?.id;
+      
+      if (!userId) {
+        console.error('❌ No user ID found for profile update');
+        return throwError(() => new Error('User ID not found'));
+      }
+      
+      // Replace :id in URL with actual user ID
+      const endpoint = API_CONFIG.USER.UPDATE_PROFILE.replace(':id', userId.toString());
+      const url = getApiUrl(endpoint);
+      
+      console.log('📝 Updating user profile via backend API:', url);
+      console.log('📦 Profile data:', profileData);
+      
+      return this.http.put(url, profileData).pipe(
+        catchError(error => {
+          console.error('❌ Backend profile update failed:', error);
+          console.error('❌ Error details:', error.error);
+          return throwError(() => error);
+        })
+      );
+    } else {
+      // LocalStorage fallback
+      try {
+        const currentUser = this.getUser();
+        const updatedUser = { ...currentUser, ...profileData };
+        this.setUser(updatedUser);
+        console.log('✅ Profile updated (LocalStorage):', updatedUser);
+        return of({ success: true, message: 'Profile updated successfully', data: updatedUser });
+      } catch (error) {
+        console.error('❌ Error updating profile:', error);
+        return throwError(() => error);
+      }
+    }
+  }
+
+  /**
+   * Get user profile from backend
+   */
+  getProfile(): Observable<any> {
+    if (this.USE_BACKEND_API) {
+      // Get user ID from stored user data
+      const currentUser = this.getUser();
+      const userId = currentUser?.id;
+      
+      if (!userId) {
+        console.warn('⚠️ No user ID found, returning localStorage data');
+        return of(currentUser);
+      }
+      
+      // Replace :id in URL with actual user ID
+      const endpoint = API_CONFIG.USER.GET_PROFILE.replace(':id', userId.toString());
+      const url = getApiUrl(endpoint);
+      
+      console.log('📥 Fetching user profile from backend:', url);
+      console.log('🔑 User ID:', userId);
+      
+      return this.http.get(url).pipe(
+        map((response: any) => {
+          console.log('✅ Profile fetched from backend:', response);
+          return response;
+        }),
+        catchError(error => {
+          console.error('❌ Failed to fetch profile from backend:', error);
+          console.error('❌ Error details:', error.error);
+          console.warn('⚠️ Falling back to localStorage data');
+          // Return localStorage data as fallback
+          return of(currentUser);
+        })
+      );
+    } else {
+      // LocalStorage fallback
+      const user = this.getUser();
+      console.log('📦 Returning profile from localStorage:', user);
+      return of(user);
+    }
+  }
 }

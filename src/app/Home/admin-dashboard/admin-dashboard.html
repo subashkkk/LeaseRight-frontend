@@ -7,20 +7,30 @@
         <h1>Lease Request</h1>
       </div>
       <div class="user-section">
-        <div class="user-info">
-          <p class="user-name">{{ userName }}</p>
-          <p class="user-role">Admin Dashboard</p>
-        </div>
-        <button class="btn-logout" (click)="logout()">
-          <i class="fas fa-sign-out-alt"></i>
-          Logout
-        </button>
+        <app-profile-dropdown
+          [userName]="userName"
+          [userRole]="'Admin Dashboard'"
+          [menuItems]="profileMenuItems"
+          (menuItemClick)="onProfileMenuClick($event)"
+          (logoutClick)="logout()">
+        </app-profile-dropdown>
       </div>
     </div>
   </header>
 
+  <!-- Account Details Section -->
+  <div class="dashboard-main" *ngIf="showAccountDetails">
+    <app-account-details [userRole]="'admin'"></app-account-details>
+    <div style="text-align: center; margin-top: 20px;">
+      <button class="action-btn" (click)="closeAccountDetails()">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+      </button>
+    </div>
+  </div>
+
   <!-- Main Content -->
-  <main class="dashboard-main">
+  <main class="dashboard-main" *ngIf="!showAccountDetails">
     <div class="welcome-section">
       <h2>Welcome back, {{ userName }}! 👋</h2>
       <p>Manage companies, vendors, and lease activity across the platform</p>

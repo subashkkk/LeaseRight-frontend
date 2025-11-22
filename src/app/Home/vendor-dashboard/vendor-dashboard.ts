@@ -6,11 +6,13 @@ import { AuthService } from '../../Auth/auth.service';
 import { LeaseRequestService, LeaseRequest, Vehicle } from '../../services/lease-request.service';
 import { VehicleLookupService, VehicleLookupResult } from '../../services/vehicle-lookup.service';
 import { VehicleFlowService } from '../../services/vehicle-flow.service';
+import { ProfileDropdownComponent, ProfileMenuItem } from '../../shared/profile-dropdown/profile-dropdown.component';
+import { AccountDetailsComponent } from '../../shared/account-details/account-details.component';
 
 @Component({
   selector: 'app-vendor-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ProfileDropdownComponent, AccountDetailsComponent],
   templateUrl: './vendor-dashboard.html',
   styleUrls: ['./vendor-dashboard.css'],
 })
@@ -86,6 +88,12 @@ export class VendorDashboard implements OnInit {
   isProcessing: boolean = false;
   successMessage: string = '';
   errorMessage: string = '';
+  showAccountDetails: boolean = false;
+  showMyVehicles: boolean = false;
+  showMyQuotes: boolean = false;
+  
+  // Profile menu items
+  profileMenuItems: ProfileMenuItem[] = [];
 
   constructor(
     private authService: AuthService,
@@ -115,6 +123,9 @@ export class VendorDashboard implements OnInit {
     this.userName = this.authService.getUserName() || 'Vendor User';
     this.userEmail = user?.email || '';
     this.companyName = user?.companyName || '';
+
+    // Setup profile menu
+    this.setupProfileMenu();
 
     // Load dashboard data
     this.loadDashboardData();
@@ -368,6 +379,55 @@ export class VendorDashboard implements OnInit {
     this.lookedUpVehicle = null;
     this.rcFrontFileName = '';
     this.rcBackFileName = '';
+  }
+
+  setupProfileMenu(): void {
+    this.profileMenuItems = [
+      { icon: 'fa-user-circle', label: 'Account Details', action: 'account' },
+      { icon: 'fa-clipboard-list', label: 'Available Requests', action: 'requests', badge: this.stats.pendingRequests },
+      { icon: 'fa-file-invoice-dollar', label: 'My Quotes', action: 'quotes', badge: this.stats.approvedRequests },
+      { icon: 'fa-car', label: 'Vehicles', action: 'vehicles', badge: this.stats.totalVehicles }
+    ];
+  }
+
+  onProfileMenuClick(action: string): void {
+    // Close all sections first
+    this.showAccountDetails = false;
+    this.showAddVehicleSection = false;
+    this.showMyVehicles = false;
+    this.showMyQuotes = false;
+
+    // Open requested section
+    switch (action) {
+      case 'account':
+        this.showAccountDetails = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        break;
+      case 'requests':
+        // Scroll to pending requests section
+        window.scrollTo({ top: 600, behavior: 'smooth' });
+        break;
+      case 'quotes':
+        this.showMyQuotes = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        break;
+      case 'vehicles':
+        this.showMyVehicles = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        break;
+    }
+  }
+
+  closeAccountDetails(): void {
+    this.showAccountDetails = false;
+  }
+
+  closeMyVehicles(): void {
+    this.showMyVehicles = false;
+  }
+
+  closeMyQuotes(): void {
+    this.showMyQuotes = false;
   }
 
   logout(): void {

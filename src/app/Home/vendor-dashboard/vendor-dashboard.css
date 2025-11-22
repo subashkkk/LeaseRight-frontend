@@ -250,6 +250,15 @@
   box-shadow: 0 4px 12px rgba(26, 26, 26, 0.3);
 }
 
+.action-btn.vendor {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.action-btn.vendor:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #65408b 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
 .action-btn i {
   font-size: 18px;
 }
@@ -757,9 +766,9 @@
     padding: 15px 20px;
   }
 
-  .header-content {
+  .request-details {
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
   }
 
   .brand h1 {
@@ -798,4 +807,109 @@
     width: 95%;
     margin: 10px;
   }
+}
+
+/* Vehicles Section Styles */
+.vehicles-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.vehicles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.vehicle-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.vehicle-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.vehicle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.vehicle-header h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.vehicle-type {
+  background: #28a745;
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vehicle-type.leased {
+  background: #6c757d;
+}
+
+.vehicle-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.vehicle-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.vehicle-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vehicle-features .feature {
+  font-size: 12px;
+  color: #28a745;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.section-header h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-header h3 i {
+  color: #667eea;
 }

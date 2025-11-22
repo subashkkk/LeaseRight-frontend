@@ -1,0 +1,46 @@
+<div class="profile-dropdown">
+  <button class="profile-trigger" (click)="toggleDropdown()" [class.active]="isOpen">
+    <div class="profile-icon">
+      <i class="fas fa-user-circle"></i>
+    </div>
+    <div class="profile-info">
+      <span class="profile-name">{{ userName }}</span>
+      <span class="profile-role">{{ userRole }}</span>
+    </div>
+    <i class="fas fa-chevron-down dropdown-arrow" [class.rotated]="isOpen"></i>
+  </button>
+
+  <div class="profile-menu" *ngIf="isOpen">
+    <div class="menu-header">
+      <div class="menu-user-info">
+        <div class="menu-avatar">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <div>
+          <p class="menu-user-name">{{ userName }}</p>
+          <p class="menu-user-role">{{ userRole }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="menu-divider"></div>
+    
+    <div class="menu-items">
+      <button 
+        class="menu-item" 
+        *ngFor="let item of menuItems"
+        (click)="onMenuItemClick(item.action)">
+        <i [class]="'fas ' + item.icon"></i>
+        <span>{{ item.label }}</span>
+        <span class="menu-badge" *ngIf="item.badge && item.badge > 0">{{ item.badge }}</span>
+      </button>
+    </div>
+    
+    <div class="menu-divider"></div>
+    
+    <button class="menu-item logout-item" (click)="onLogout()">
+      <i class="fas fa-sign-out-alt"></i>
+      <span>Logout</span>
+    </button>
+  </div>
+</div>
