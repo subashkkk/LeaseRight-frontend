@@ -192,6 +192,10 @@
 
         <!-- Step 2: Enter OTP -->
         <form *ngIf="forgotStep === 'otp'" [formGroup]="forgotOtpForm" (ngSubmit)="submitForgotOtp()">
+          <p class="otp-email" *ngIf="forgotEmailForDisplay || forgotEmailForm.get('email')?.value">
+            OTP has been sent to
+            <strong>{{ forgotEmailForDisplay || forgotEmailForm.get('email')?.value }}</strong>
+          </p>
           <div class="form-group">
             <label class="form-label">
               <i class="fas fa-key"></i>
@@ -203,13 +207,18 @@
               formControlName="otp"
               placeholder="Enter the OTP received">
           </div>
-          <div class="form-actions" style="display:flex; justify-content:space-between; gap:8px;">
+          <div class="form-actions otp-actions">
             <button type="button" class="btn btn-secondary" (click)="cancelForgotPassword()">
               Cancel
             </button>
-            <button type="submit" class="btn btn-primary">
-              Verify OTP
-            </button>
+            <div class="otp-actions-row">
+              <button type="button" class="btn btn-secondary" (click)="resendOtp()">
+                Resend OTP
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Verify OTP
+              </button>
+            </div>
           </div>
         </form>
 

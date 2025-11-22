@@ -136,6 +136,20 @@
         </div>
       </div>
     </div>
+ 
+    <!-- Quick Actions -->
+    <div class="actions-section">
+      <div class="actions-grid">
+        <button class="action-btn" type="button" (click)="openIncomingRequestsQuickAction()">
+          <i class="fas fa-inbox"></i>
+          Incoming Lease Requests
+        </button>
+        <button class="action-btn" type="button" (click)="openAddVehicleQuickAction()">
+          <i class="fas fa-car-side"></i>
+          Add New Vehicle
+        </button>
+      </div>
+    </div>
 
     <!-- Success/Error Messages -->
     <div class="alert alert-success" *ngIf="successMessage && !showResponseForm">
@@ -148,7 +162,7 @@
     </div>
 
     <!-- Incoming Lease Requests -->
-    <div class="requests-section">
+    <div class="requests-section" id="incoming-requests" *ngIf="showIncomingRequestsSection">
       <h3>Incoming Lease Requests ({{ pendingRequests.length }})</h3>
       
       <div class="requests-grid" *ngIf="pendingRequests.length > 0">
@@ -195,7 +209,7 @@
     </div>
 
     <!-- Add New Vehicle Section -->
-    <div class="requests-section add-vehicle-section">
+    <div class="requests-section add-vehicle-section" id="add-vehicle-section" *ngIf="showAddVehicleSection">
       <div class="add-vehicle-header" (click)="toggleAddVehicleSection()">
         <h3>Add New Vehicle</h3>
         <button class="add-toggle-btn" type="button">

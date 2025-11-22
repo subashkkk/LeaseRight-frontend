@@ -38,6 +38,7 @@ export class VendorDashboard implements OnInit {
 
   // Add New Vehicle section state
   showAddVehicleSection: boolean = false;
+  showIncomingRequestsSection: boolean = false;
   newVehicleNumber: string = '';
   newOwnerName: string = '';
   lookupLoading: boolean = false;
@@ -302,6 +303,27 @@ export class VendorDashboard implements OnInit {
     });
   }
 
+  scrollToSection(sectionId: string): void {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  openIncomingRequestsQuickAction(): void {
+    if (!this.showIncomingRequestsSection) {
+      this.showIncomingRequestsSection = true;
+    }
+    this.scrollToSection('incoming-requests');
+  }
+
+  openAddVehicleQuickAction(): void {
+    if (!this.showAddVehicleSection) {
+      this.showAddVehicleSection = true;
+    }
+    this.scrollToSection('add-vehicle-section');
+  }
+
   // ===== Add New Vehicle section methods =====
 
   toggleAddVehicleSection(): void {
@@ -325,14 +347,9 @@ export class VendorDashboard implements OnInit {
         this.lookupLoading = false;
         this.lookedUpVehicle = result;
 
-        // Save into flow service and navigate to details page
+        // Save full details (including extended fields) into flow service and navigate to details page
         this.vehicleFlow.setDetails({
-          registrationNumber: result.registrationNumber,
-          ownerName: result.ownerName,
-          make: result.make || '',
-          model: result.model || '',
-          fuelType: result.fuelType || '',
-          registrationDate: result.registrationDate || ''
+          ...result
         });
 
         this.router.navigate(['/vendor/vehicle-details']);

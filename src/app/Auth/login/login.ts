@@ -31,6 +31,7 @@ export class Login implements OnInit {
   resetPasswordForm!: FormGroup;
   forgotSuccessMessage = '';
   forgotErrorMessage = '';
+  forgotEmailForDisplay = '';
 
   constructor(
     private fb: FormBuilder,
@@ -223,6 +224,9 @@ export class Login implements OnInit {
       this.forgotErrorMessage = 'Please enter a valid email address';
       return;
     }
+    const email = this.forgotEmailForm.value.email;
+    this.forgotEmailForDisplay = email;
+
     this.forgotErrorMessage = '';
     this.forgotSuccessMessage = 'OTP has been sent to your email.';
     // In a real app, call backend API to send OTP here
@@ -238,6 +242,18 @@ export class Login implements OnInit {
     this.forgotSuccessMessage = 'OTP verified. Please set your new password.';
     // In a real app, verify OTP with backend here
     this.forgotStep = 'reset';
+  }
+
+  resendOtp(): void {
+    const email = this.forgotEmailForDisplay || this.forgotEmailForm.value.email;
+
+    if (!email) {
+      this.forgotErrorMessage = 'Email is missing. Please go back and enter your email again.';
+      return;
+    }
+
+    this.forgotErrorMessage = '';
+    this.forgotSuccessMessage = 'OTP has been re-sent to your email.';
   }
 
   submitNewPassword(): void {
