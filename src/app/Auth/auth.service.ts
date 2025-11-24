@@ -236,6 +236,30 @@ export class AuthService {
     return btoa(`${email}:${timestamp}`);
   }
 
+  forgotPassword(email: string): Observable<any> {
+    const url = getApiUrl(API_CONFIG.OTP.FORGOT_PASSWORD);
+    const payload = { mail: email };
+
+    return this.http.post(url, payload).pipe(
+      catchError(error => {
+        console.error('❌ Forgot password request failed:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  resetPassword(email: string, otp: string, newPassword: string): Observable<any> {
+    const url = getApiUrl(API_CONFIG.OTP.RESET_PASSWORD);
+    const payload = { mail: email, otp, newPassword };
+
+    return this.http.post(url, payload).pipe(
+      catchError(error => {
+        console.error('❌ Reset password request failed:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
   /**
    * Register a new user (vendor or company)
    */

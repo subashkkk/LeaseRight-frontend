@@ -20,7 +20,9 @@ export const API_CONFIG = {
   OTP: {
     SIGNUP: '/signup',           // POST - Create user, validate GST, send OTP
     VERIFY: '/verify_OTP',       // POST - Verify OTP and activate account
-    RESEND: '/resend-otp'        // GET - Resend OTP to email
+    RESEND: '/resend-otp',       // GET - Resend OTP to email
+    FORGOT_PASSWORD: '/forgot-password',
+    RESET_PASSWORD: '/reset-password'
   },
   
   // User Profile Endpoints
@@ -80,7 +82,10 @@ export const API_CONFIG = {
     DELETE_USER: '/deletebyid/:id',                   // DELETE - Delete user by ID
     GET_USER_BY_NAME: '/getbyname/:name',            // GET - Get user by name
     DELETE_USER_BY_NAME: '/deletebyname/:name',      // DELETE - Delete user by name
-    GET_USERS_BY_ROLE: '/users/role/:role'           // GET - Get users filtered by role (will use findByRole)
+    GET_USERS_BY_ROLE: '/users/role/:role',          // GET - Get users filtered by role (will use findByRole)
+    TOTAL_ACTIVE_USERS: '/TotalActiveUsers',         // GET - Total active users
+    TOTAL_ACTIVE_VENDORS: '/TotalActiveVendors',     // GET - Total active vendors
+    TOTAL_ACTIVE_COMPANIES: '/TotalActiveCompanies'  // GET - Total active companies
   }
 };
 

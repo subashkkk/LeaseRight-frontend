@@ -79,6 +79,22 @@ export class AdminDashboard implements OnInit {
         this.vendors = data.vendors;
         this.companies = data.companies;
         this.recentActivities = data.recentActivities.slice(0, 10);
+
+        // Override counts using backend totals
+        this.adminService.getTotalActiveUsers().subscribe({
+          next: (count) => this.stats.totalUsers = count,
+          error: (error) => console.error('❌ Failed to load total users count:', error)
+        });
+
+        this.adminService.getTotalActiveVendors().subscribe({
+          next: (count) => this.stats.totalVendors = count,
+          error: (error) => console.error('❌ Failed to load total vendors count:', error)
+        });
+
+        this.adminService.getTotalActiveCompanies().subscribe({
+          next: (count) => this.stats.totalCompanies = count,
+          error: (error) => console.error('❌ Failed to load total companies count:', error)
+        });
       },
       error: (error) => {
         console.error('❌ Failed to load dashboard data:', error);
@@ -245,12 +261,6 @@ export class AdminDashboard implements OnInit {
         this.isLoading = false;
       }
     });
-  }
-
-  loadPendingApprovals(): void {
-    console.log('📥 Loading pending approvals...');
-    this.activeTab = 'pending';
-    // Filter will happen automatically via getFilteredUsers()
   }
 
   refreshData(): void {

@@ -144,6 +144,51 @@ export class AdminService {
   }
 
   /**
+   * Get total active users count from backend
+   */
+  getTotalActiveUsers(): Observable<number> {
+    const url = getApiUrl(API_CONFIG.ADMIN.TOTAL_ACTIVE_USERS);
+    console.log('📥 Fetching total active users:', url);
+
+    return this.http.get<number>(url).pipe(
+      catchError(error => {
+        console.error('❌ Failed to fetch total active users:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get total active vendors count from backend
+   */
+  getTotalActiveVendors(): Observable<number> {
+    const url = getApiUrl(API_CONFIG.ADMIN.TOTAL_ACTIVE_VENDORS);
+    console.log('📥 Fetching total active vendors:', url);
+
+    return this.http.get<number>(url).pipe(
+      catchError(error => {
+        console.error('❌ Failed to fetch total active vendors:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get total active companies count from backend
+   */
+  getTotalActiveCompanies(): Observable<number> {
+    const url = getApiUrl(API_CONFIG.ADMIN.TOTAL_ACTIVE_COMPANIES);
+    console.log('📥 Fetching total active companies:', url);
+
+    return this.http.get<number>(url).pipe(
+      catchError(error => {
+        console.error('❌ Failed to fetch total active companies:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
    * Update user by ID
    */
   updateUser(userId: number, userData: any): Observable<any> {

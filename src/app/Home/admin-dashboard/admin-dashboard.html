@@ -59,16 +59,6 @@
           <p class="stat-number">{{ stats.totalCompanies }}</p>
         </div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-icon warning">
-          <i class="fas fa-clock"></i>
-        </div>
-        <div class="stat-details">
-          <h3>Pending Approvals</h3>
-          <p class="stat-number">{{ stats.pendingRequests }}</p>
-        </div>
-      </div>
     </div>
 
     <!-- Quick Actions -->
@@ -86,10 +76,6 @@
         <button class="action-btn" (click)="loadCompanies()">
           <i class="fas fa-building"></i>
           Load Companies
-        </button>
-        <button class="action-btn" (click)="loadPendingApprovals()">
-          <i class="fas fa-clock"></i>
-          Load Pending
         </button>
         <button class="action-btn" (click)="refreshData()">
           <i class="fas fa-sync-alt"></i>

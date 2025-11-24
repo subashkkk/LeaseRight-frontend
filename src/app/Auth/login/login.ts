@@ -225,12 +225,21 @@ export class Login implements OnInit {
       return;
     }
     const email = this.forgotEmailForm.value.email;
-    this.forgotEmailForDisplay = email;
 
     this.forgotErrorMessage = '';
-    this.forgotSuccessMessage = 'OTP has been sent to your email.';
-    // In a real app, call backend API to send OTP here
-    this.forgotStep = 'otp';
+    this.forgotSuccessMessage = '';
+
+    this.authService.forgotPassword(email).subscribe({
+      next: (response) => {
+        this.forgotEmailForDisplay = email;
+        const message = typeof response === 'string' ? response : (response?.message || 'OTP has been sent to your email.');
+        this.forgotSuccessMessage = message;
+        this.forgotStep = 'otp';
+      },
+      error: (error) => {
+        this.forgotErrorMessage = error.error?.message || 'Failed to send OTP. Please try again.';
+      }
+    });
   }
 
   submitForgotOtp(): void {
@@ -269,19 +278,34 @@ export class Login implements OnInit {
       this.forgotErrorMessage = 'Passwords do not match';
       return;
     }
+    const email = this.forgotEmailForDisplay || this.forgotEmailForm.value.email;
+    const otp = this.forgotOtpForm.value.otp;
+
+    if (!email || !otp) {
+      this.forgotErrorMessage = 'Email or OTP is missing. Please go back and try again.';
+      return;
+    }
 
     this.forgotErrorMessage = '';
-    this.forgotSuccessMessage = 'Password changed successfully. Redirecting to login...';
-    this.forgotStep = 'success';
+    this.forgotSuccessMessage = '';
 
-    // In a real app, call backend API to update password here
+    this.authService.resetPassword(email, otp, newPwd).subscribe({
+      next: (response) => {
+        const message = typeof response === 'string' ? response : (response?.message || 'Password changed successfully. Redirecting to login...');
+        this.forgotSuccessMessage = message;
+        this.forgotStep = 'success';
 
-    setTimeout(() => {
-      this.forgotMode = false;
-      this.forgotStep = 'email';
-      this.forgotSuccessMessage = '';
-      this.resetPasswordForm.reset();
-      this.forgotOtpForm.reset();
-    }, 2000);
+        setTimeout(() => {
+          this.forgotMode = false;
+          this.forgotStep = 'email';
+          this.forgotSuccessMessage = '';
+          this.resetPasswordForm.reset();
+          this.forgotOtpForm.reset();
+        }, 2000);
+      },
+      error: (error) => {
+        this.forgotErrorMessage = error.error?.message || 'Failed to reset password. Please check the OTP and try again.';
+      }
+    });
   }
 }
