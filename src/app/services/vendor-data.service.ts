@@ -13,7 +13,7 @@ export interface VendorData {
   contactNumber: string;
   email: string;
   gstNumber: string;
-  panNumber: string;
+  panNumber?: string;
   password: string;
   role: string;
   registeredAt: string;

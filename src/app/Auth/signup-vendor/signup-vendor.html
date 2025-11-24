@@ -140,7 +140,7 @@
           <div class="form-group">
             <label for="panNo" class="form-label">
               <i class="fas fa-id-card"></i>
-              PAN Number
+              PAN Number <span class="optional-label">(Optional)</span>
             </label>
             <input 
               id="panNo" 
@@ -151,7 +151,6 @@
               [class.input-error]="panNo?.invalid && panNo?.touched">
             <span class="error-message" *ngIf="panNo?.invalid && panNo?.touched">
               <i class="fas fa-exclamation-triangle"></i>
-              <span *ngIf="panNo?.errors?.['required']">PAN Number is required</span>
               <span *ngIf="panNo?.errors?.['pattern']">Please enter a valid PAN number format</span>
             </span>
           </div>
