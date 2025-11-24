@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { getApiUrl } from '../config/api.config';
 
 export interface VehicleLookupResult {
   registrationNumber: string;
@@ -35,41 +36,101 @@ export interface VehicleLookupResult {
   providedIn: 'root'
 })
 export class VehicleLookupService {
-  // Toggle between backend/third-party API and mock data
-  private USE_BACKEND_API = false; // placeholder for future real API integration
-
   constructor(private http: HttpClient) {}
 
   lookupByRegistration(regNo: string, ownerName: string): Promise<VehicleLookupResult> {
-    // For now always return mocked data to avoid build errors until backend endpoint is ready
-    return Promise.resolve({
-      registrationNumber: regNo,
-      ownerName,
-      make: 'Toyota',
-      model: 'Innova',
-      fuelType: 'Diesel',
-      registrationDate: '2022-01-15',
+    const url = getApiUrl('/vehicle/addVehicle');
 
-      // Mock values for extended fields
-      brandName: 'Toyota',
-      brandModel: 'Innova Crysta',
-      isFinanced: 'Yes',
-      manufacturingDate: '2021-11-10',
-      blacklistStatus: 'Clear',
-      financer: 'HDFC Bank',
-      bodyType: 'SUV',
-      color: 'White',
-      rcStatus: 'Active',
-      fitUpto: '2026-11-10',
-      taxUpto: '2025-11-10',
-      category: 'Commercial',
-      insuranceCompany: 'ICICI Lombard',
-      insurancePolicy: 'POL123456',
-      insuranceExpiry: '2024-11-10',
-      chasisNumber: 'CHASIS1234567890',
-      ownerCount: '1',
-      seatingCapacity: '7',
-      licensePlate: regNo
+    return new Promise((resolve, reject) => {
+      this.http
+        .get<any>(url, {
+          params: {
+            vehicleNumber: regNo,
+            ownerName: ownerName
+          }
+        })
+        .subscribe({
+          next: (response: any) => {
+            const result: VehicleLookupResult = {
+              registrationNumber: response.licensePlate || regNo,
+              ownerName: response.ownerName || ownerName,
+              make: response.brandName || null,
+              model: response.brandModel || null,
+              fuelType: response.fuelType || null,
+              registrationDate: response.registrationDate || null,
+
+              brandName: response.brandName ?? null,
+              brandModel: response.brandModel ?? null,
+              isFinanced:
+                typeof response.isFinanced === 'boolean'
+                  ? (response.isFinanced ? 'Yes' : 'No')
+                  : (response.isFinanced ?? null),
+              manufacturingDate: response.manufacturingDate ?? null,
+              blacklistStatus: response.blacklistStatus ?? null,
+              financer: response.financer ?? null,
+              bodyType: response.bodyType ?? null,
+              color: response.color ?? null,
+              rcStatus: response.rcStatus ?? null,
+              fitUpto: response.fitUpTo ?? response.fitUpto ?? null,
+              taxUpto: response.taxUpto ?? null,
+              category: response.category ?? null,
+              insuranceCompany: response.insuranceCompany ?? null,
+              insurancePolicy: response.insurancePolicy ?? null,
+              insuranceExpiry: response.insuranceExpiry ?? null,
+              chasisNumber: response.chassisNumber ?? response.chasisNumber ?? null,
+              ownerCount:
+                response.ownerCount !== undefined && response.ownerCount !== null
+                  ? String(response.ownerCount)
+                  : null,
+              seatingCapacity:
+                response.seatingCapacity !== undefined && response.seatingCapacity !== null
+                  ? String(response.seatingCapacity)
+                  : null,
+              licensePlate: response.licensePlate || regNo
+            };
+
+            resolve(result);
+          },
+          error: (error) => {
+            reject(error);
+          }
+        });
+    });
+  }
+
+  saveVehicle(details: VehicleLookupResult): Promise<any> {
+    const url = getApiUrl('/vehicle/saveVehicle');
+
+    const payload: any = {
+      brandName: details.brandName ?? null,
+      brandModel: details.brandModel ?? null,
+      bodyType: details.bodyType ?? null,
+      color: details.color ?? null,
+      seatingCapacity: details.seatingCapacity ? Number(details.seatingCapacity) : null,
+      ownerCount: details.ownerCount ? Number(details.ownerCount) : null,
+      licensePlate: details.licensePlate || details.registrationNumber,
+      ownerName: details.ownerName,
+      fuelType: details.fuelType ?? null,
+      rcStatus: details.rcStatus ?? null,
+      registrationDate: details.registrationDate ?? null,
+      blacklistStatus: details.blacklistStatus ?? null,
+      fitUpTo: details.fitUpto ?? null,
+      taxUpto: details.taxUpto ?? null,
+      insuranceExpiry: details.insuranceExpiry ?? null,
+      chassisNumber: details.chasisNumber ?? null
+    };
+
+    return new Promise((resolve, reject) => {
+      this.http
+        .post(url, payload, { responseType: 'text' })
+        .subscribe({
+          next: (response) => {
+            resolve(response);
+          },
+          error: (error) => {
+            reject(error);
+          }
+        });
     });
   }
 }

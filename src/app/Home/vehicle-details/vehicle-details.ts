@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { VehicleFlowService, VehicleDetailsForm } from '../../services/vehicle-flow.service';
+import { VehicleLookupService } from '../../services/vehicle-lookup.service';
 
 @Component({
   selector: 'app-vehicle-details',
@@ -45,7 +46,8 @@ export class VehicleDetailsComponent {
 
   constructor(
     private flow: VehicleFlowService,
-    private router: Router
+    private router: Router,
+    private vehicleLookup: VehicleLookupService
   ) {
     const existing = this.flow.getDetails();
     if (existing) {
@@ -88,9 +90,19 @@ export class VehicleDetailsComponent {
       return;
     }
 
-    // Any field that was blank stays as empty string; that is acceptable
-    this.flow.setDetails(this.details);
-    this.router.navigate(['/home/vendor-dashboard']);
+    this.vehicleLookup
+      .saveVehicle(this.details)
+      .then(() => {
+        // Keep details in flow and redirect to dashboard with success flag
+        this.flow.setDetails(this.details);
+        this.router.navigate(['/home/vendor-dashboard'], {
+          queryParams: { vehicleSaved: '1' }
+        });
+      })
+      .catch(error => {
+        console.error('Failed to save vehicle:', error);
+        this.errorMessage = 'Failed to save vehicle. Please try again.';
+      });
   }
 
   cancel(): void {

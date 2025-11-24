@@ -143,6 +143,7 @@
         <button class="action-btn" type="button" (click)="openIncomingRequestsQuickAction()">
           <i class="fas fa-inbox"></i>
           Incoming Lease Requests
+          <i class="fas" [ngClass]="{ 'fa-chevron-down': !showIncomingRequestsSection, 'fa-chevron-up': showIncomingRequestsSection }"></i>
         </button>
         <button class="action-btn" type="button" (click)="openAddVehicleQuickAction()">
           <i class="fas fa-car-side"></i>
