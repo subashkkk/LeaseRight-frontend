@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../Auth/auth.service';
 import { LeaseRequestService, LeaseRequest, Vehicle } from '../../services/lease-request.service';
@@ -99,6 +99,7 @@ export class VendorDashboard implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
     private leaseService: LeaseRequestService,
     private vehicleLookupService: VehicleLookupService,
     private vehicleFlow: VehicleFlowService
@@ -124,6 +125,16 @@ export class VendorDashboard implements OnInit {
     this.userName = this.authService.getUserName() || 'Vendor User';
     this.userEmail = user?.email || '';
     this.companyName = user?.companyName || '';
+
+    // Show success banner if coming back from vehicle save
+    const vehicleSaved = this.route.snapshot.queryParamMap.get('vehicleSaved');
+    if (vehicleSaved === '1' || vehicleSaved === 'true') {
+      this.successMessage = 'Vehicle details saved successfully.';
+
+      setTimeout(() => {
+        this.successMessage = '';
+      }, 3000);
+    }
 
     // Setup profile menu
     this.setupProfileMenu();
@@ -311,10 +322,11 @@ export class VendorDashboard implements OnInit {
   }
 
   openIncomingRequestsQuickAction(): void {
-    if (!this.showIncomingRequestsSection) {
-      this.showIncomingRequestsSection = true;
+    this.showIncomingRequestsSection = !this.showIncomingRequestsSection;
+
+    if (this.showIncomingRequestsSection) {
+      this.scrollToSection('incoming-requests');
     }
-    this.scrollToSection('incoming-requests');
   }
 
   openAddVehicleQuickAction(): void {
