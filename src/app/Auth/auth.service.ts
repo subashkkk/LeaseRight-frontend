@@ -240,7 +240,9 @@ export class AuthService {
     const url = getApiUrl(API_CONFIG.OTP.FORGOT_PASSWORD);
     const payload = { mail: email };
 
-    return this.http.post(url, payload).pipe(
+    // Backend returns plain text (e.g. "OTP sent to your email."), so
+    // we treat the response as text instead of JSON to avoid parse errors.
+    return this.http.post(url, payload, { responseType: 'text' as 'json' }).pipe(
       catchError(error => {
         console.error('❌ Forgot password request failed:', error);
         return throwError(() => error);
@@ -252,7 +254,9 @@ export class AuthService {
     const url = getApiUrl(API_CONFIG.OTP.RESET_PASSWORD);
     const payload = { mail: email, otp, newPassword };
 
-    return this.http.post(url, payload).pipe(
+    // Backend returns plain text (e.g. "Password reset successfully!"),
+    // so use text responseType to keep the success path working.
+    return this.http.post(url, payload, { responseType: 'text' as 'json' }).pipe(
       catchError(error => {
         console.error('❌ Reset password request failed:', error);
         return throwError(() => error);

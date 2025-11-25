@@ -38,6 +38,18 @@ export interface Vehicle {
   features: string[];
 }
 
+// Shape of vehicle objects returned by backend VehicleVerificationEntity
+export interface BackendVehicle {
+  id?: number;
+  brandName?: string | null;
+  brandModel?: string | null;
+  fuelType?: string | null;
+  insuranceExpiry?: string | null;
+  seatingCapacity?: number | null;
+  licensePlate?: string | null;
+  ownerName?: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -53,6 +65,27 @@ export class LeaseRequestService {
     private http: HttpClient
   ) {
     // No dummy data initialization - always use backend
+  }
+
+  /**
+   * Fetch vehicles for a specific vendor (by email) from backend
+   */
+  getVendorVehiclesFromBackend(vendorEmail: string): Promise<BackendVehicle[]> {
+    const url = getApiUrl('/vehicle/vendor');
+    return new Promise((resolve, reject) => {
+      this.http
+        .get<BackendVehicle[]>(url, { params: { mail: vendorEmail } })
+        .pipe(
+          catchError((error) => {
+            console.error('❌ Failed to fetch vendor vehicles from backend:', error);
+            throw error;
+          })
+        )
+        .subscribe({
+          next: (vehicles) => resolve(vehicles),
+          error: (error) => reject(error)
+        });
+    });
   }
 
   // ========== LEASE REQUEST METHODS ========== 
@@ -300,12 +333,11 @@ export class LeaseRequestService {
         rejected: requests.filter((r: LeaseRequest) => r.status === 'rejected').length
       };
     } catch (error) {
-      console.error('❌ Error getting company stats:', error);
       return { total: 0, pending: 0, approved: 0, rejected: 0 };
     }
   }
 
-  // ========== VEHICLE METHODS ==========
+  // ========== VEHICLE METHODS ========== 
 
   /**
    * Get all available vehicles
@@ -363,16 +395,40 @@ export class LeaseRequestService {
    */
   async getVendorStats(vendorEmail: string): Promise<any> {
     try {
-      const vehicles = this.getVehiclesByVendor(vendorEmail);
+      let totalVehicles = 0;
+      let leasedVehicles = 0;
+      let availableVehicles = 0;
+      let totalRevenue = 0;
+
+      if (this.USE_BACKEND_API) {
+        // When backend is enabled, use real vehicles from /vehicle/vendor
+        const backendVehicles: BackendVehicle[] = await this.getVendorVehiclesFromBackend(vendorEmail);
+
+        // Map minimal stats. If backend later adds availability/price fields, they can be used here.
+        totalVehicles = backendVehicles.length;
+        // For now, treat all vehicles as available with zero revenue until lease linkage is implemented.
+        availableVehicles = backendVehicles.length;
+        leasedVehicles = 0;
+        totalRevenue = 0;
+      } else {
+        const vehicles = this.getVehiclesByVendor(vendorEmail);
+        totalVehicles = vehicles.length;
+        availableVehicles = vehicles.filter((v: Vehicle) => v.available).length;
+        leasedVehicles = vehicles.filter((v: Vehicle) => !v.available).length;
+        totalRevenue = vehicles
+          .filter((v: Vehicle) => !v.available)
+          .reduce((sum: number, v: Vehicle) => sum + v.pricePerMonth, 0);
+      }
+
       const allRequests = await this.getAllLeaseRequests();
       
       return {
-        totalVehicles: vehicles.length,
-        availableVehicles: vehicles.filter((v: Vehicle) => v.available).length,
-        leasedVehicles: vehicles.filter((v: Vehicle) => !v.available).length,
+        totalVehicles,
+        availableVehicles,
+        leasedVehicles,
         pendingRequests: allRequests.filter((r: LeaseRequest) => !r.status || r.status === 'pending').length,
         approvedRequests: allRequests.filter((r: LeaseRequest) => r.status === 'approved').length,
-        totalRevenue: vehicles.filter((v: Vehicle) => !v.available).reduce((sum: number, v: Vehicle) => sum + v.pricePerMonth, 0)
+        totalRevenue
       };
     } catch (error) {
       console.error('❌ Error getting vendor stats:', error);

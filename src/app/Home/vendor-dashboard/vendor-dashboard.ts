@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../Auth/auth.service';
-import { LeaseRequestService, LeaseRequest, Vehicle } from '../../services/lease-request.service';
+import { LeaseRequestService, LeaseRequest, BackendVehicle } from '../../services/lease-request.service';
 import { VehicleLookupService, VehicleLookupResult } from '../../services/vehicle-lookup.service';
 import { VehicleFlowService } from '../../services/vehicle-flow.service';
 import { ProfileDropdownComponent, ProfileMenuItem } from '../../shared/profile-dropdown/profile-dropdown.component';
@@ -33,7 +33,8 @@ export class VendorDashboard implements OnInit {
 
   // Data
   pendingRequests: LeaseRequest[] = [];
-  myVehicles: Vehicle[] = [];
+  // Vehicles belonging to this vendor (loaded from backend when available)
+  myVehicles: BackendVehicle[] = [];
   selectedRequest: LeaseRequest | null = null;
 
   // Add New Vehicle section state
@@ -122,9 +123,19 @@ export class VendorDashboard implements OnInit {
       return;
     }
 
-    this.userName = this.authService.getUserName() || 'Vendor User';
-    this.userEmail = user?.email || '';
+    // Prefer stored userName, then backend userInfo.name
+    this.userName = this.authService.getUserName() || user?.name || 'Vendor User';
+
+    // For backend login, user is stored as userInfo { id, name, mail, role, contactNo }
+    // For any older/local flows, email may be under user.email or localStorage 'userEmail'
+    this.userEmail = user?.email || user?.mail || localStorage.getItem('userEmail') || '';
     this.companyName = user?.companyName || '';
+
+    console.log('VendorDashboard user context:', {
+      user,
+      role,
+      userEmail: this.userEmail,
+    });
 
     // Show success banner if coming back from vehicle save
     const vehicleSaved = this.route.snapshot.queryParamMap.get('vehicleSaved');
@@ -151,8 +162,13 @@ export class VendorDashboard implements OnInit {
       // Load pending requests from backend (all requests - vendors see all)
       this.pendingRequests = await this.leaseService.getPendingRequests();
 
-      // Load my vehicles (still using localStorage for now)
-      this.myVehicles = this.leaseService.getVehiclesByVendor(this.userEmail);
+      // Load vendor vehicles from backend, fall back to localStorage if it fails
+      try {
+        this.myVehicles = await this.leaseService.getVendorVehiclesFromBackend(this.userEmail);
+      } catch (e) {
+        console.error('❌ Failed to load vendor vehicles from backend, falling back to local data:', e);
+        this.myVehicles = this.leaseService.getVehiclesByVendor(this.userEmail) as any;
+      }
       
       console.log('✅ Vendor dashboard data loaded:', {
         stats: this.stats,
@@ -369,7 +385,12 @@ export class VendorDashboard implements OnInit {
       .catch(error => {
         console.error('Vehicle lookup failed:', error);
         this.lookupLoading = false;
-        this.lookupError = 'Failed to fetch vehicle details. Please try again or fill details manually.';
+        const backendMessage =
+          error?.error?.['catch block error'] ||
+          error?.error?.error ||
+          error?.message;
+
+        this.lookupError = backendMessage || 'Failed to fetch vehicle details. Please try again or fill details manually.';
       });
   }
 

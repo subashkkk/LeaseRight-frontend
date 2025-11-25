@@ -42,16 +42,22 @@
       <div class="vehicles-grid" *ngIf="myVehicles.length > 0">
         <div class="vehicle-card" *ngFor="let vehicle of myVehicles">
           <div class="vehicle-header">
-            <h4>{{ vehicle.make }} {{ vehicle.model }} ({{ vehicle.year }})</h4>
-            <span [class]="vehicle.available ? 'vehicle-type' : 'vehicle-type leased'">{{ vehicle.available ? 'Available' : 'Leased' }}</span>
+            <h4>{{ vehicle.licensePlate || 'Registration N/A' }}</h4>
+            <span class="vehicle-type">{{ vehicle.brandName }} {{ vehicle.brandModel }}</span>
           </div>
           <div class="vehicle-info">
-            <span class="vehicle-price">₹{{ vehicle.pricePerMonth | number }}/month</span>
-          </div>
-          <div class="vehicle-features">
-            <span class="feature" *ngFor="let feature of vehicle.features">
-              <i class="fas fa-check-circle"></i> {{ feature }}
-            </span>
+            <div class="detail-item">
+              <span class="label">Fuel:</span>
+              <span class="value">{{ vehicle.fuelType || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Insurance Expiry:</span>
+              <span class="value">{{ vehicle.insuranceExpiry || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Seating Capacity:</span>
+              <span class="value">{{ vehicle.seatingCapacity || 'N/A' }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -348,8 +354,8 @@
                 <span>
                   <select class="form-input" [(ngModel)]="quotation.itemDescription">
                     <option value="" disabled selected>Select vehicle</option>
-                    <option *ngFor="let v of myVehicles" [ngValue]="v.make + ' ' + v.model + ' (' + v.year + ')'">
-                      {{ v.make }} {{ v.model }} ({{ v.year }}) - ${{ v.pricePerMonth }}/month
+                    <option *ngFor="let v of myVehicles" [ngValue]="(v.brandName || '') + ' ' + (v.brandModel || '') + ' (' + (v.licensePlate || '') + ')'">
+                      {{ v.brandName }} {{ v.brandModel }} ({{ v.licensePlate }})
                     </option>
                   </select>
                 </span>
