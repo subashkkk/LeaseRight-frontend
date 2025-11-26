@@ -81,15 +81,62 @@
     <div class="requests-section">
       <div class="section-header">
         <h3><i class="fas fa-file-invoice-dollar"></i> My Quotations</h3>
-        <button class="btn-close" (click)="closeMyQuotes()">
-          <i class="fas fa-times"></i>
-        </button>
+        <div class="header-actions">
+          <button class="btn-refresh" (click)="loadMyQuotations()" [disabled]="quotationsLoading">
+            <i [class]="quotationsLoading ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'"></i>
+            {{ quotationsLoading ? 'Loading...' : 'Refresh' }}
+          </button>
+          <button class="btn-close" (click)="closeMyQuotes()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       </div>
       
-      <p class="no-data">
+      <!-- Loading State -->
+      <div *ngIf="quotationsLoading" class="loading-state">
+        <i class="fas fa-spinner fa-spin fa-2x"></i>
+        <p>Loading quotations...</p>
+      </div>
+      
+      <!-- Empty State -->
+      <div *ngIf="!quotationsLoading && myQuotations.length === 0" class="no-data">
         <i class="fas fa-info-circle"></i>
-        Your submitted quotations will appear here.
-      </p>
+        <p>No quotations submitted yet. Click "Refresh" to load your quotations.</p>
+      </div>
+      
+      <!-- Quotations List -->
+      <div *ngIf="!quotationsLoading && myQuotations.length > 0" class="quotations-list">
+        <div class="quote-card" *ngFor="let quote of myQuotations" [class.approved]="quote.status === 'APPROVED'" [class.rejected]="quote.status === 'REJECTED'">
+          <div class="quote-card-header">
+            <span class="quote-number">{{ quote.quotationNumber }}</span>
+            <span class="quote-status" 
+                  [class.status-pending]="quote.status === 'PENDING' || !quote.status"
+                  [class.status-approved]="quote.status === 'APPROVED'"
+                  [class.status-rejected]="quote.status === 'REJECTED'">
+              {{ quote.status || 'PENDING' }}
+            </span>
+            <span class="quote-date">{{ quote.quoteDate | date:'MMM d, y' }}</span>
+          </div>
+          <div class="quote-card-body">
+            <div class="quote-info">
+              <p><strong>Company:</strong> {{ quote.requestedBy?.name || '-' }}</p>
+              <p><strong>Request ID:</strong> #{{ quote.leaseRequest?.id || '-' }}</p>
+              <p><strong>Item:</strong> {{ quote.itemDescription || '-' }}</p>
+              <p><strong>Total Amount:</strong> ₹{{ quote.totalAmount | number:'1.2-2' }}</p>
+              <p><strong>Valid Until:</strong> {{ quote.validUntil | date:'MMM d, y' }}</p>
+            </div>
+          </div>
+          <div class="quote-card-actions">
+            <span class="approved-badge" *ngIf="quote.status === 'APPROVED'">
+              <i class="fas fa-check-circle"></i> Approved by Company
+            </span>
+            <button class="btn-download" (click)="downloadQuotationPdf(quote.id)">
+              <i class="fas fa-file-pdf"></i>
+              Download PDF
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -179,7 +226,16 @@
               <h4>{{ request.vehicleType }}<span *ngIf="request.preferredModel"> - {{ request.preferredModel }}</span></h4>
               <p class="company-name">{{ request.companyName }}</p>
             </div>
-            <span class="request-date">{{ request.createdAt | date:'short' }}</span>
+            <div class="header-right">
+              <!-- Status badges -->
+              <span class="status-badge badge-success" *ngIf="hasQuotationForRequest(request.id) && !isQuotationExpired(request.id)">
+                <i class="fas fa-check-circle"></i> Quote Submitted
+              </span>
+              <span class="status-badge badge-danger" *ngIf="hasQuotationForRequest(request.id) && isQuotationExpired(request.id)">
+                <i class="fas fa-exclamation-circle"></i> Quote Expired
+              </span>
+              <span class="request-date">{{ request.createdAt | date:'short' }}</span>
+            </div>
           </div>
           
           <div class="request-details">
@@ -189,7 +245,7 @@
             </div>
             <div class="detail-item">
               <i class="fas fa-calendar"></i>
-              <span>Duration: {{ request.leaseDuration }} {{ request.leaseDuration === 1 ? 'month' : 'months' }}</span>
+              <span>Duration: {{ request.leaseDuration }}</span>
             </div>
             <div class="detail-item">
               <i class="fas fa-rupee-sign"></i>
@@ -202,9 +258,21 @@
             <p>{{ request.additionalRequirements }}</p>
           </div>
           
-          <button class="btn-respond" (click)="respondToRequest(request)">
+          <!-- Show different button based on quotation status -->
+          <button class="btn-respond" (click)="respondToRequest(request)" 
+                  *ngIf="!hasQuotationForRequest(request.id)">
             <i class="fas fa-reply"></i>
             Respond to Request
+          </button>
+          <button class="btn-respond btn-view-quote" (click)="respondToRequest(request)" 
+                  *ngIf="hasQuotationForRequest(request.id) && !isQuotationExpired(request.id)">
+            <i class="fas fa-eye"></i>
+            View Submitted Quote
+          </button>
+          <button class="btn-respond btn-resubmit" (click)="respondToRequest(request)" 
+                  *ngIf="hasQuotationForRequest(request.id) && isQuotationExpired(request.id)">
+            <i class="fas fa-redo"></i>
+            Resubmit Quote
           </button>
         </div>
       </div>
@@ -306,19 +374,19 @@
           <div class="request-summary">
             <div class="quote-header-grid">
               <div>
-                <p><strong>Company Name:</strong> {{ selectedRequest.companyName }}</p>
-                <p><strong>Company Email:</strong> {{ selectedRequest.companyEmail }}</p>
-                <p><strong>Company GST:</strong></p>
+                <p><strong>Company Name:</strong> {{ selectedRequest.company?.name || selectedRequest.companyName || '-' }}</p>
+                <p><strong>Company Email:</strong> {{ selectedRequest.company?.mail || selectedRequest.companyEmail || '-' }}</p>
+                <p><strong>Company GST:</strong> {{ selectedRequest.company?.gstNo || '-' }}</p>
+                <p><strong>Company Contact:</strong> {{ selectedRequest.company?.contactNo || '-' }}</p>
                 <p><strong>Request ID:</strong> {{ selectedRequest.id }}</p>
                 <p><strong>Requested Vehicle:</strong> {{ selectedRequest.vehicleType }}<span *ngIf="selectedRequest.preferredModel"> - {{ selectedRequest.preferredModel }}</span></p>
                 <p><strong>Budget Range:</strong> ₹{{ selectedRequest.minBudget | number }} - ₹{{ selectedRequest.maxBudget | number }}/month</p>
               </div>
               <div class="quote-header-right">
-                <p><strong>Vendor Company:</strong> {{ companyName }}</p>
+                <p><strong>Vendor Company:</strong> {{ companyName || userName }}</p>
                 <p><strong>Vendor Email:</strong> {{ userEmail }}</p>
-                <p><strong>Vendor GST:</strong></p>
-                <p><strong>Vendor Address:</strong></p>
-                <p><strong>Vendor Contact:</strong> {{ userName }}</p>
+                <p><strong>Vendor GST:</strong> {{ vendorGst || '-' }}</p>
+                <p><strong>Vendor Contact:</strong> {{ vendorContact || '-' }}</p>
               </div>
             </div>
           </div>
@@ -331,12 +399,16 @@
             <div class="detail-item">
               <strong>Q.Date:&nbsp;</strong>
               <input type="date" class="form-input" style="max-width: 180px;"
-                     [(ngModel)]="quotation.quotationDate" />
+                     [(ngModel)]="quotation.quotationDate"
+                     [min]="minQuoteDate"
+                     required />
             </div>
             <div class="detail-item">
               <strong>Valid Until:&nbsp;</strong>
               <input type="date" class="form-input" style="max-width: 180px;"
-                     [(ngModel)]="quotation.validUntil" />
+                     [(ngModel)]="quotation.validUntil"
+                     [min]="quotation.quotationDate || minQuoteDate"
+                     required />
             </div>
           </div>
 
@@ -407,6 +479,14 @@
                       class="form-input"
                       rows="5"
                       placeholder="Maintenance, insurance, special conditions..."></textarea>
+          </div>
+          
+          <!-- Success/Error Messages -->
+          <div *ngIf="successMessage" class="alert alert-success">
+            {{ successMessage }}
+          </div>
+          <div *ngIf="errorMessage" class="alert alert-error">
+            {{ errorMessage }}
           </div>
           
           <div class="button-group">

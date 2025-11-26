@@ -85,7 +85,7 @@ export class AuthService {
         map((response: any) => {
           console.log('✅ Backend login successful:', response);
           
-          // Backend response format: { success, message, userInfo: { id, name, mail, role, contactNo }, token }
+          // Backend response format: { success, message, userInfo: { id, name, mail, role, contactNo, gstNo }, token }
           if (response.success && response.userInfo && response.token) {
             // Use the REAL JWT token from backend (not fake generated one)
             const jwtToken = response.token;
@@ -109,7 +109,8 @@ export class AuthService {
                 lastName: response.userInfo.name.split(' ').slice(1).join(' ') || '',
                 name: response.userInfo.name,
                 role: response.userInfo.role,
-                contactNo: response.userInfo.contactNo
+                contactNo: response.userInfo.contactNo,
+                gstNo: response.userInfo.gstNo
               },
               userRole: response.userInfo.role,
               userName: response.userInfo.name

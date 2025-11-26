@@ -1,25 +1,40 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, catchError } from 'rxjs';
-import { API_CONFIG, getApiUrl } from '../config/api.config';
+import { Observable, of, catchError, firstValueFrom } from 'rxjs';
+import { API_CONFIG, getApiUrl, replaceUrlParams } from '../config/api.config';
 
 // Vehicle types from backend enum
 export type VehicleType = 'SUV' | 'SEDAN' | 'HATCHBACK' | 'CUV' | 'MUV' | 'PICKUP' | 'SPORTS' | 'LUXURY';
+
+// Company object from backend UserEntity
+export interface CompanyInfo {
+  id?: number;
+  name?: string;
+  mail?: string;
+  gstNo?: string;
+  panNo?: string;
+  contactNo?: string;
+  role?: string;
+  isVerified?: boolean;
+}
 
 // Lease Request interface matching backend LeaseRequestDTO
 export interface LeaseRequest {
   id?: number;  // Backend uses Long
   vehicleType: VehicleType;
   preferredModel?: string;
-  leaseDuration: number;  // Integer in months/years
+  leaseDuration: number | string;  // Can be number or formatted string like "2 years"
   minBudget: number;
   maxBudget: number;
   additionalRequirements?: string;
   companyId?: number;
+  // Company object from backend (UserEntity)
+  company?: CompanyInfo;
   // Additional frontend-only fields for display
   createdAt?: string;
   status?: 'pending' | 'approved' | 'rejected';
   vendorResponse?: string;
+  // Legacy fields (kept for backward compatibility)
   companyName?: string;
   companyEmail?: string;
 }
@@ -72,17 +87,22 @@ export class LeaseRequestService {
    */
   getVendorVehiclesFromBackend(vendorEmail: string): Promise<BackendVehicle[]> {
     const url = getApiUrl('/vehicle/vendor');
+    console.log('🌐 API Call:', url, 'with params:', { mail: vendorEmail });
     return new Promise((resolve, reject) => {
       this.http
         .get<BackendVehicle[]>(url, { params: { mail: vendorEmail } })
         .pipe(
           catchError((error) => {
             console.error('❌ Failed to fetch vendor vehicles from backend:', error);
+            console.error('Error details:', error.error);
             throw error;
           })
         )
         .subscribe({
-          next: (vehicles) => resolve(vehicles),
+          next: (vehicles) => {
+            console.log('📦 Backend response - vehicles:', vehicles);
+            resolve(vehicles);
+          },
           error: (error) => reject(error)
         });
     });
@@ -153,14 +173,21 @@ export class LeaseRequestService {
   updateLeaseRequest(requestId: number, requestData: Omit<LeaseRequest, 'status' | 'createdAt'>): Promise<any> {
     return new Promise((resolve, reject) => {
       if (this.USE_BACKEND_API) {
-        // Backend API - Note: You may need to add UPDATE endpoint to backend
-        const url = `${getApiUrl(API_CONFIG.LEASE_REQUEST.CREATE)}/${requestId}`;
+        // Backend API - Use the correct UPDATE endpoint
+        const url = getApiUrl(replaceUrlParams(API_CONFIG.LEASE_REQUEST.UPDATE, { id: requestId }));
         console.log('📝 Updating lease request via backend:', url);
+        
+        // Parse leaseDuration - extract number if it's a string like "15 years"
+        let duration: any = requestData.leaseDuration;
+        if (typeof duration === 'string') {
+          const match = duration.match(/(\d+)/);
+          duration = match ? parseInt(match[1], 10) : duration;
+        }
         
         const backendData = {
           vehicleType: requestData.vehicleType,
           preferredModel: requestData.preferredModel || '',
-          leaseDuration: requestData.leaseDuration,
+          leaseDuration: duration,
           minBudget: requestData.minBudget,
           maxBudget: requestData.maxBudget,
           additionalRequirements: requestData.additionalRequirements || '',
@@ -287,6 +314,23 @@ export class LeaseRequestService {
         resolve(pending);
       }
     });
+  }
+
+  /**
+   * Get pending requests for a specific vendor (excludes requests already quoted by this vendor)
+   */
+  async getPendingRequestsForVendor(vendorId: number): Promise<LeaseRequest[]> {
+    const url = getApiUrl(replaceUrlParams(API_CONFIG.LEASE_REQUEST.VENDOR_PENDING, { vendorId }));
+    console.log('📋 Fetching pending requests for vendor:', url);
+    return firstValueFrom(this.http.get<LeaseRequest[]>(url));
+  }
+
+  /**
+   * Get pending requests count for a specific vendor
+   */
+  async getPendingCountForVendor(vendorId: number): Promise<number> {
+    const url = getApiUrl(replaceUrlParams(API_CONFIG.LEASE_REQUEST.VENDOR_PENDING_COUNT, { vendorId }));
+    return firstValueFrom(this.http.get<number>(url));
   }
 
   /**

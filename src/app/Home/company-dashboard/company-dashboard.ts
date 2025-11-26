@@ -314,10 +314,17 @@ export class CompanyDashboard implements OnInit {
     this.isEditingRequest = true;
     this.editingRequestId = request.id || null;
     
+    // Parse leaseDuration - extract number if it's a string like "15 years"
+    let duration: any = request.leaseDuration;
+    if (typeof duration === 'string') {
+      const match = duration.match(/(\d+)/);
+      duration = match ? parseInt(match[1], 10) : 12; // default to 12 if parsing fails
+    }
+    
     this.requestForm.patchValue({
       vehicleType: request.vehicleType,
       preferredModel: request.preferredModel || '',
-      leaseDuration: request.leaseDuration,
+      leaseDuration: duration,
       minBudget: request.minBudget,
       maxBudget: request.maxBudget,
       additionalRequirements: request.additionalRequirements || ''

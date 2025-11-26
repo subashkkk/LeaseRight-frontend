@@ -27,19 +27,41 @@
   }
 }
 
-/* Main Container */
-.quotations-container {
-  font-family: 'Roboto', sans-serif;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  color: #1a1a1a;
+/* Section Header */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e0e0e0;
 }
 
-/* Header */
-.header {
-  margin-bottom: 24px;
-  padding-bottom: 0;
+.section-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.btn-refresh {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .header h1 {
@@ -69,6 +91,12 @@
   background-color: #fde8e8;
   color: #9b2c2c;
   border-left: 4px solid #e53e3e;
+}
+
+.alert.success {
+  background-color: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
 }
 
 .close-btn {
@@ -726,4 +754,57 @@
   .quotations-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Expired status styles */
+.expired {
+  color: #dc3545 !important;
+  font-weight: 600;
+}
+
+.expired-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.expired-text {
+  color: #dc3545;
+  font-weight: 600;
+  margin-left: 5px;
+}
+
+.valid-until-cell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Status badge variants */
+.status-expired {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.status-warning {
+  background: linear-gradient(135deg, #fd7e14 0%, #e65c00 100%);
+  color: white;
+}
+
+.status-pending {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+}
+
+/* Expiring soon styles (yellow/orange) */
+.expiring-soon {
+  color: #fd7e14 !important;
+  font-weight: 600;
 }

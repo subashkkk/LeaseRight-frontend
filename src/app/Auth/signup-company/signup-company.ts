@@ -103,11 +103,26 @@ export class SignupCompany implements OnInit {
         this.isLoading = false;
         console.error('Signup error:', error);
         
-        // Extract meaningful error message
-        if (error.error && typeof error.error === 'string') {
-          this.errorMessage = error.error;
-        } else if (error.message) {
-          this.errorMessage = error.message;
+        // Extract meaningful error message from backend response
+        if (error.error) {
+          // Try to parse if it's a JSON string
+          let errorObj = error.error;
+          if (typeof error.error === 'string') {
+            try {
+              errorObj = JSON.parse(error.error);
+            } catch (e) {
+              // Not JSON, use as-is
+              this.errorMessage = error.error;
+              return;
+            }
+          }
+          
+          // Extract message from parsed object
+          if (errorObj && errorObj.message) {
+            this.errorMessage = errorObj.message;
+          } else {
+            this.errorMessage = 'Signup failed. Please check your details and try again.';
+          }
         } else if (error.status === 0) {
           this.errorMessage = 'Cannot connect to server. Please ensure backend is running on port 8080.';
         } else {

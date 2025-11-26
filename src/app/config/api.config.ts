@@ -68,10 +68,25 @@ export const API_CONFIG = {
   // Lease Request Endpoints (matching backend controller)
   LEASE_REQUEST: {
     CREATE: '/lease-requests/new-Lease-Request',      // POST - Create new lease request
-    UPDATE: '/lease-requests/:id',                    // PUT - Update existing lease request
+    UPDATE: '/lease-requests/Update-Lease-Request/:id', // PUT - Update existing lease request
     GET_ALL: '/lease-requests/all',                   // GET - Get all requests (for vendors)
     GET_BY_ID: '/lease-requests/:id',                 // GET - Get single request by ID
-    GET_BY_COMPANY: '/lease-requests/company/:companyId'  // GET - Get requests by company ID
+    GET_BY_COMPANY: '/lease-requests/company/:companyId',  // GET - Get requests by company ID
+    VENDOR_PENDING_COUNT: '/lease-requests/vendor/:vendorId/pending-count', // GET - Pending count for vendor
+    VENDOR_PENDING: '/lease-requests/vendor/:vendorId/pending'  // GET - Pending requests for vendor
+  },
+
+  // Quotation Endpoints
+  QUOTATION: {
+    SUBMIT: '/api/quotation/submit',                    // POST - Submit new quotation
+    GET_NEXT_NUMBER: '/api/quotation/next-number',      // GET - Get next quotation number
+    GET_BY_COMPANY: '/api/quotation/company/:companyId', // GET - Get quotations by company
+    GET_BY_VENDOR: '/api/quotation/vendor/:vendorId',   // GET - Get quotations by vendor
+    GET_BY_LEASE_REQUEST: '/api/quotation/lease-request/:leaseRequestId', // GET - Get quotations for lease request
+    GET_PDF: '/api/quotation/:id/pdf',                  // GET - Download quotation PDF
+    APPROVE: '/api/quotation/:id/approve',              // PUT - Approve quotation
+    REJECT: '/api/quotation/:id/reject',                // PUT - Reject quotation
+    VENDOR_APPROVED_COUNT: '/api/quotation/vendor/:vendorId/approved-count' // GET - Get vendor's approved count
   },
 
   // Admin Endpoints

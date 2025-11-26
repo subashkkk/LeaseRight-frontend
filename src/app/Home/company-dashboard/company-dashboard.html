@@ -101,7 +101,7 @@
     <!-- Vendor Quotations Panel (quick action result) -->
     <div class="requests-section" *ngIf="showVendorQuotations" style="margin-bottom: 30px;">
       <h3>Vendor Quotations</h3>
-      <app-quotations></app-quotations>
+      <app-quotations [companyId]="companyId"></app-quotations>
     </div>
 
     <!-- Success/Error Messages -->
@@ -176,7 +176,7 @@
           <label>Lease Duration (in months) *</label>
           <input type="number" formControlName="leaseDuration" class="form-input" 
                  min="1" placeholder="12">
-          <small class="form-hint">Duration will be converted to years (e.g., 12 months = 1 year)</small>
+          <small class="form-hint">Enter the lease duration in months (e.g., 12, 24, 36)</small>
         </div>
 
         <div class="form-group">
@@ -262,7 +262,7 @@
           <div class="request-details">
             <div class="detail-item">
               <i class="fas fa-calendar"></i>
-              <span>Duration: {{ request.leaseDuration }} {{ request.leaseDuration === 1 ? 'month' : 'months' }}</span>
+              <span>Duration: {{ request.leaseDuration }}</span>
             </div>
             <div class="detail-item">
               <i class="fas fa-rupee-sign"></i>
@@ -368,7 +368,7 @@
           <label>Lease Duration (in months) *</label>
           <input type="number" formControlName="leaseDuration" class="form-input" 
                  min="1" placeholder="12">
-          <small class="form-hint">Duration will be converted to years (e.g., 12 months = 1 year)</small>
+          <small class="form-hint">Enter the lease duration in months (e.g., 12, 24, 36)</small>
         </div>
 
         <div class="form-group">

@@ -49,11 +49,13 @@ export class Login implements OnInit {
     console.log('🔐 Is authenticated:', isAuth);
     
     if (isAuth) {
-      const userRole = localStorage.getItem('userRole');
+      const userRole = localStorage.getItem('userRole')?.toLowerCase();
       console.log('👤 User role:', userRole);
       console.log('⚠️  User already authenticated, redirecting to dashboard...');
       
-      if (userRole === 'vendor') {
+      if (userRole === 'admin') {
+        this.router.navigate(['/admin/dashboard']);
+      } else if (userRole === 'vendor') {
         this.router.navigate(['/home/vendor-dashboard']);
       } else {
         this.router.navigate(['/home/company-dashboard']);
@@ -171,10 +173,17 @@ export class Login implements OnInit {
         }
 
         // Navigate based on user role
+        const role = response.userRole?.toLowerCase();
+        console.log('🚀 About to navigate, userRole:', role);
         setTimeout(() => {
-          if (response.userRole === 'admin') {
-            this.router.navigate(['/admin/dashboard']);
-          } else if (response.userRole === 'vendor') {
+          console.log('⏰ Timeout fired, navigating now...');
+          if (role === 'admin') {
+            console.log('👑 Navigating to admin dashboard...');
+            this.router.navigate(['/admin/dashboard']).then(
+              (success) => console.log('✅ Navigation result:', success),
+              (error) => console.error('❌ Navigation error:', error)
+            );
+          } else if (role === 'vendor') {
             this.router.navigate(['/home/vendor-dashboard']);
           } else {
             this.router.navigate(['/home/company-dashboard']);

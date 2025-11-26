@@ -38,6 +38,12 @@ export class AdminDashboard implements OnInit {
   companies: any[] = [];
   recentActivities: UserActivity[] = [];
   chartData: any[] = [];
+  selectedUser: any = null;
+  
+  // Confirmation modal
+  showConfirmModal: boolean = false;
+  confirmAction: 'delete' | 'approve' | null = null;
+  confirmUser: any = null;
 
   constructor(
     private authService: AuthService,
@@ -46,17 +52,29 @@ export class AdminDashboard implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    console.log('🏠 Admin Dashboard ngOnInit called');
+    
     // Check authentication
-    if (!this.authService.isAuthenticated()) {
+    const isAuth = this.authService.isAuthenticated();
+    console.log('🔐 Is authenticated:', isAuth);
+    
+    if (!isAuth) {
+      console.log('❌ Not authenticated, redirecting to login');
       this.router.navigate(['/auth/login']);
       return;
     }
 
-    const role = this.authService.getUserRole();
+    const role = this.authService.getUserRole()?.toLowerCase();
+    console.log('👤 User role from service:', role);
+    console.log('👤 User role from localStorage:', localStorage.getItem('userRole'));
+    
     if (role !== 'admin') {
+      console.log('❌ Not admin role, redirecting to login');
       this.router.navigate(['/auth/login']);
       return;
     }
+    
+    console.log('✅ Admin authenticated, loading dashboard');
 
     this.userName = this.authService.getUserName() || 'System Admin';
     this.currentDate = new Date().toLocaleDateString('en-US', { 
@@ -174,43 +192,103 @@ export class AdminDashboard implements OnInit {
 
   viewUser(user: any): void {
     console.log('👁️ View user:', user);
-    alert(`User Details:\nName: ${user.name}\nEmail: ${user.mail}\nRole: ${user.role}\nStatus: ${user.isVerified ? 'Verified' : 'Pending'}`);
+    this.selectedUser = user;
+  }
+
+  closeUserModal(): void {
+    this.selectedUser = null;
+  }
+
+  // Show confirmation modal for approve/delete
+  showConfirmation(action: 'delete' | 'approve', user: any): void {
+    this.confirmAction = action;
+    this.confirmUser = user;
+    this.showConfirmModal = true;
+  }
+
+  // Close confirmation modal
+  closeConfirmModal(): void {
+    this.showConfirmModal = false;
+    this.confirmAction = null;
+    this.confirmUser = null;
+  }
+
+  // Execute the confirmed action
+  executeConfirmedAction(): void {
+    if (!this.confirmUser || !this.confirmAction) return;
+
+    if (this.confirmAction === 'approve') {
+      this.performApproveUser(this.confirmUser);
+    } else if (this.confirmAction === 'delete') {
+      this.performDeleteUser(this.confirmUser);
+    }
+    this.closeConfirmModal();
   }
 
   approveUser(user: any): void {
-    if (confirm(`Approve user: ${user.name}?`)) {
-      console.log('✅ Approving user:', user.id);
-      
-      this.adminService.approveUser(user.id).subscribe({
-        next: (response) => {
-          console.log('✅ User approved:', response);
-          alert(`User ${user.name} has been approved!`);
-          this.loadDashboardData(); // Reload data
-        },
-        error: (error) => {
-          console.error('❌ Failed to approve user:', error);
-          alert('Failed to approve user. Please try again.');
-        }
-      });
-    }
+    this.showConfirmation('approve', user);
   }
 
   deleteUser(user: any): void {
-    if (confirm(`Are you sure you want to delete user: ${user.name}?`)) {
-      console.log('🗑️ Deleting user:', user.id);
-      
-      this.adminService.deleteUser(user.id).subscribe({
-        next: (response) => {
-          console.log('✅ User deleted:', response);
-          alert(`User ${user.name} has been deleted!`);
-          this.loadDashboardData(); // Reload data
-        },
-        error: (error) => {
-          console.error('❌ Failed to delete user:', error);
-          alert('Failed to delete user. Please try again.');
+    this.showConfirmation('delete', user);
+  }
+
+  private performApproveUser(user: any): void {
+    console.log('✅ Approving user:', user.id);
+    
+    this.adminService.approveUser(user.id).subscribe({
+      next: (response) => {
+        console.log('✅ User approved:', response);
+        // Close user details modal if open
+        this.selectedUser = null;
+        // Update user in local arrays
+        const updateUserStatus = (u: any) => {
+          if (u.id === user.id) {
+            u.isVerified = true;
+          }
+          return u;
+        };
+        this.allUsers = this.allUsers.map(updateUserStatus);
+        this.vendors = this.vendors.map(updateUserStatus);
+        this.companies = this.companies.map(updateUserStatus);
+        // Update pending count
+        this.stats.pendingRequests = Math.max(0, this.stats.pendingRequests - 1);
+        console.log('✅ User approved successfully:', user.name);
+      },
+      error: (error) => {
+        console.error('❌ Failed to approve user:', error);
+      }
+    });
+  }
+
+  private performDeleteUser(user: any): void {
+    console.log('🗑️ Deleting user:', user.id);
+    
+    this.adminService.deleteUser(user.id).subscribe({
+      next: (response) => {
+        console.log('✅ User deleted:', response);
+        // Close user details modal if open
+        this.selectedUser = null;
+        // Remove user from local arrays
+        this.allUsers = this.allUsers.filter(u => u.id !== user.id);
+        this.vendors = this.vendors.filter(u => u.id !== user.id);
+        this.companies = this.companies.filter(u => u.id !== user.id);
+        // Update stats
+        this.stats.totalUsers = Math.max(0, this.stats.totalUsers - 1);
+        if (user.role === 'vendor') {
+          this.stats.totalVendors = Math.max(0, this.stats.totalVendors - 1);
+        } else if (user.role === 'company') {
+          this.stats.totalCompanies = Math.max(0, this.stats.totalCompanies - 1);
         }
-      });
-    }
+        if (!user.isVerified) {
+          this.stats.pendingRequests = Math.max(0, this.stats.pendingRequests - 1);
+        }
+        console.log('✅ User deleted successfully:', user.name);
+      },
+      error: (error) => {
+        console.error('❌ Failed to delete user:', error);
+      }
+    });
   }
 
   logout(): void {

@@ -186,3 +186,134 @@
     </div>
   </main>
 </div>
+
+<!-- User Details Modal -->
+<div class="modal-overlay" *ngIf="selectedUser" (click)="closeUserModal()">
+  <div class="modal-panel" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>User Details</h3>
+      <button class="modal-close" (click)="closeUserModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="user-profile-section">
+        <div class="user-avatar-large">{{ selectedUser.name?.charAt(0).toUpperCase() }}</div>
+        <div class="user-profile-info">
+          <h4>{{ selectedUser.name }}</h4>
+          <span class="role-badge" [class.vendor]="selectedUser.role === 'vendor'" [class.company]="selectedUser.role === 'company'" [class.admin]="selectedUser.role === 'admin'">
+            {{ selectedUser.role }}
+          </span>
+        </div>
+      </div>
+
+      <div class="user-details-grid">
+        <div class="detail-item">
+          <div class="detail-icon">
+            <i class="fas fa-hashtag"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">User ID</span>
+            <span class="detail-value">{{ selectedUser.id }}</span>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-icon">
+            <i class="fas fa-envelope"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">Email Address</span>
+            <span class="detail-value">{{ selectedUser.mail }}</span>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-icon">
+            <i class="fas fa-phone"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">Contact Number</span>
+            <span class="detail-value">{{ selectedUser.contactNo || 'Not provided' }}</span>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-icon">
+            <i class="fas fa-building"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">GST Number</span>
+            <span class="detail-value">{{ selectedUser.gstNo || 'Not provided' }}</span>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">Verification Status</span>
+            <span class="status-badge" [class.verified]="selectedUser.isVerified" [class.pending]="!selectedUser.isVerified">
+              {{ selectedUser.isVerified ? 'Verified' : 'Pending Verification' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-icon">
+            <i class="fas fa-calendar"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">Registration Date</span>
+            <span class="detail-value">{{ selectedUser.createdAt | date:'medium' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeUserModal()">Close</button>
+      <button class="btn-approve" *ngIf="!selectedUser.isVerified" (click)="approveUser(selectedUser)">
+        <i class="fas fa-check"></i> Approve User
+      </button>
+      <button class="btn-danger" (click)="deleteUser(selectedUser)">
+        <i class="fas fa-trash"></i> Delete User
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="confirm-overlay" *ngIf="showConfirmModal" (click)="closeConfirmModal()">
+  <div class="confirm-panel" (click)="$event.stopPropagation()">
+    <div class="confirm-icon" [class.delete]="confirmAction === 'delete'" [class.approve]="confirmAction === 'approve'">
+      <i class="fas" [class.fa-trash-alt]="confirmAction === 'delete'" [class.fa-check-circle]="confirmAction === 'approve'"></i>
+    </div>
+    
+    <div class="confirm-content">
+      <h3 *ngIf="confirmAction === 'delete'">Delete User</h3>
+      <h3 *ngIf="confirmAction === 'approve'">Approve User</h3>
+      
+      <p *ngIf="confirmAction === 'delete'">
+        Are you sure you want to delete <strong>{{ confirmUser?.name }}</strong>?
+        <br><span class="warning-text">This action cannot be undone.</span>
+      </p>
+      <p *ngIf="confirmAction === 'approve'">
+        Are you sure you want to approve <strong>{{ confirmUser?.name }}</strong>?
+        <br><span class="info-text">This will verify the user account.</span>
+      </p>
+    </div>
+
+    <div class="confirm-actions">
+      <button class="btn-cancel" (click)="closeConfirmModal()">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+      <button class="btn-confirm" [class.delete]="confirmAction === 'delete'" [class.approve]="confirmAction === 'approve'" (click)="executeConfirmedAction()">
+        <i class="fas" [class.fa-trash]="confirmAction === 'delete'" [class.fa-check]="confirmAction === 'approve'"></i>
+        {{ confirmAction === 'delete' ? 'Yes, Delete' : 'Yes, Approve' }}
+      </button>
+    </div>
+  </div>
+</div>

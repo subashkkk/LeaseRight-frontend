@@ -1,4 +1,19 @@
 <div class="quotations-container">
+  <!-- Header with Refresh -->
+  <div class="section-header">
+    <h3>📋 Received Quotations</h3>
+    <button class="btn-refresh" (click)="refreshQuotations()" [disabled]="isLoading">
+      <span *ngIf="!isLoading">🔄 Refresh</span>
+      <span *ngIf="isLoading">⏳ Loading...</span>
+    </button>
+  </div>
+
+  <!-- Success Alert -->
+  <div *ngIf="successMessage" class="alert success">
+    <span class="close-btn" (click)="successMessage = null">&times;</span>
+    {{ successMessage }}
+  </div>
+
   <!-- Error Alert -->
   <div *ngIf="error" class="alert error">
     <span class="close-btn" (click)="error = null">&times;</span>
@@ -65,60 +80,70 @@
       <!-- List View -->
       <div *ngIf="viewMode === 'list'" class="quotations-list">
         <div class="list-header">
-          <div class="header-cell">QUOTATION ID</div>
+          <div class="header-cell">QUOTATION NO</div>
           <div class="header-cell">VENDOR</div>
           <div class="header-cell">REQUEST ID</div>
           <div class="header-cell text-right">AMOUNT</div>
-          <div class="header-cell">STATUS</div>
+          <div class="header-cell">QUOTE DATE</div>
           <div class="header-cell">VALID UNTIL</div>
+          <div class="header-cell">STATUS</div>
           <div class="header-cell">ACTIONS</div>
         </div>
 
         <div class="list-body">
           <div *ngFor="let quote of paginatedQuotations" class="list-row" (click)="viewQuotation(quote)">
             <div class="cell">
-              <strong>{{ quote.id }}</strong>
+              <strong>{{ quote.quotationNumber }}</strong>
             </div>
             <div class="cell">
-              {{ quote.vendorName }}
+              {{ quote.vendor?.name || '-' }}
             </div>
             <div class="cell">
-              {{ quote.requestId }}
+              #{{ quote.leaseRequest?.id || '-' }}
             </div>
             <div class="cell text-right">
-              <strong>${{ getTotalAmount(quote) | number:'1.2-2' }}</strong>
+              <strong>₹{{ quote.totalAmount | number:'1.2-2' }}</strong>
             </div>
             <div class="cell">
-              <span class="status-badge" [ngClass]="'status-' + quote.status">
-                {{ quote.status | titlecase }}
+              {{ quote.quoteDate | date:'MMM d, y' }}
+            </div>
+            <div class="cell valid-until-cell" 
+                 [class.expiring-soon]="isExpiringSoon(quote.validUntil) && !isExpired(quote.validUntil)"
+                 [class.expired]="isExpired(quote.validUntil)">
+              {{ quote.validUntil | date:'MMM d, y' }}
+              <span class="expired-badge" *ngIf="isExpired(quote.validUntil)">EXPIRED</span>
+            </div>
+            <div class="cell status-cell">
+              <span class="status-badge" 
+                    [class.status-pending]="quote.status === 'PENDING'"
+                    [class.status-approved]="quote.status === 'APPROVED'"
+                    [class.status-rejected]="quote.status === 'REJECTED'">
+                {{ quote.status || 'PENDING' }}
               </span>
             </div>
-            <div class="cell">
-              {{ quote.validUntil | date:'MMM d, y' }}
-            </div>
             <div class="cell actions">
-              <button 
-                *ngIf="quote.status !== 'accepted'"
-                (click)="$event.stopPropagation(); onStatusChange(quote, 'accepted')"
-                class="btn btn-success"
-                title="Accept Quotation"
-              >
-                ✓
-              </button>
-              <button 
-                *ngIf="quote.status !== 'rejected'"
-                (click)="$event.stopPropagation(); onStatusChange(quote, 'rejected')"
-                class="btn btn-danger"
-                title="Reject Quotation"
-              >
-                ✕
-              </button>
               <button 
                 (click)="$event.stopPropagation(); viewQuotation(quote)"
                 class="btn btn-info"
                 title="View Details"
               >
                 👁️
+              </button>
+              <button 
+                *ngIf="quote.status === 'PENDING' || !quote.status"
+                (click)="$event.stopPropagation(); approveQuotation(quote)"
+                class="btn btn-success"
+                title="Approve Quotation"
+                [disabled]="isApproving"
+              >
+                ✅
+              </button>
+              <button 
+                (click)="$event.stopPropagation(); downloadPdf(quote)"
+                class="btn btn-secondary"
+                title="Download PDF"
+              >
+                📄
               </button>
             </div>
           </div>
@@ -129,63 +154,66 @@
       <div *ngIf="viewMode === 'grid'" class="quotations-grid">
         <div *ngFor="let quote of paginatedQuotations" class="quotation-card">
           <div class="card-header">
-            <h3>Quotation #{{ quote.id }}</h3>
-            <span class="status-badge" [ngClass]="'status-' + quote.status">
-              {{ quote.status | titlecase }}
-            </span>
+            <h3>{{ quote.quotationNumber }}</h3>
+            <span class="status-badge status-approved" *ngIf="quote.status === 'APPROVED'">Approved</span>
+            <span class="status-badge status-rejected" *ngIf="quote.status === 'REJECTED'">Rejected</span>
+            <span class="status-badge status-expired" *ngIf="quote.status !== 'APPROVED' && quote.status !== 'REJECTED' && isExpired(quote.validUntil)">Expired</span>
+            <span class="status-badge status-warning" *ngIf="quote.status !== 'APPROVED' && quote.status !== 'REJECTED' && isExpiringSoon(quote.validUntil) && !isExpired(quote.validUntil)">Expiring Soon</span>
+            <span class="status-badge status-pending" *ngIf="(quote.status === 'PENDING' || !quote.status) && !isExpired(quote.validUntil) && !isExpiringSoon(quote.validUntil)">Pending</span>
           </div>
           
           <div class="card-body">
             <div class="info-row">
               <span class="label">Vendor:</span>
-              <span class="value">{{ quote.vendorName }}</span>
+              <span class="value">{{ quote.vendor?.name || '-' }}</span>
             </div>
             <div class="info-row">
               <span class="label">Request ID:</span>
-              <span class="value">{{ quote.requestId }}</span>
+              <span class="value">#{{ quote.leaseRequest?.id || '-' }}</span>
             </div>
             <div class="info-row">
               <span class="label">Amount:</span>
-              <span class="value amount">${{ getTotalAmount(quote) | number:'1.2-2' }}</span>
+              <span class="value amount">₹{{ quote.totalAmount | number:'1.2-2' }}</span>
             </div>
             <div class="info-row">
-              <span class="label">Submitted:</span>
-              <span class="value">{{ quote.submittedDate | date:'MMM d, y' }}</span>
+              <span class="label">Quote Date:</span>
+              <span class="value">{{ quote.quoteDate | date:'MMM d, y' }}</span>
             </div>
             <div class="info-row">
               <span class="label">Valid Until:</span>
-              <span class="value" [class.expiring-soon]="isExpiringSoon(quote.validUntil)">
+              <span class="value" 
+                    [class.expiring-soon]="isExpiringSoon(quote.validUntil) && !isExpired(quote.validUntil)"
+                    [class.expired]="isExpired(quote.validUntil)">
                 {{ quote.validUntil | date:'MMM d, y' }}
+                <span class="expired-text" *ngIf="isExpired(quote.validUntil)">(Expired)</span>
               </span>
             </div>
             
-            <div *ngIf="quote.notes" class="notes">
-              <span class="label">Notes:</span>
-              <p class="value">{{ quote.notes }}</p>
+            <div *ngIf="quote.termsAndConditions" class="notes">
+              <span class="label">Terms:</span>
+              <p class="value">{{ quote.termsAndConditions }}</p>
             </div>
             
             <div class="card-actions">
-              <button 
-                *ngIf="quote.status !== 'accepted'"
-                (click)="$event.stopPropagation(); onStatusChange(quote, 'accepted')"
-                class="btn btn-success"
-                title="Accept Quotation"
-              >
-                Accept
-              </button>
-              <button 
-                *ngIf="quote.status !== 'rejected'"
-                (click)="$event.stopPropagation(); onStatusChange(quote, 'rejected')"
-                class="btn btn-danger"
-                title="Reject Quotation"
-              >
-                Reject
-              </button>
               <button 
                 (click)="$event.stopPropagation(); viewQuotation(quote)"
                 class="btn btn-info"
               >
                 View Details
+              </button>
+              <button 
+                *ngIf="quote.status === 'PENDING' || !quote.status"
+                (click)="$event.stopPropagation(); approveQuotation(quote)"
+                class="btn btn-success"
+                [disabled]="isApproving"
+              >
+                ✅ Approve
+              </button>
+              <button 
+                (click)="$event.stopPropagation(); downloadPdf(quote)"
+                class="btn btn-secondary"
+              >
+                Download PDF
               </button>
             </div>
           </div>
@@ -219,32 +247,16 @@
     <!-- Empty State -->
     <div *ngIf="filteredQuotations.length === 0" class="empty-state">
       <div class="empty-icon">📋</div>
-      
-      <!-- Not loaded yet -->
-      <div *ngIf="!dataLoaded">
-        <h3>Quotation Details</h3>
-        <p>Click the button below to load quotations from vendors.</p>
-        <button 
-          (click)="loadQuotations()"
-          class="btn btn-primary"
-        >
-          <span>🔄</span> Load Quotations
-        </button>
-      </div>
-      
-      <!-- Data loaded but empty or filtered -->
-      <div *ngIf="dataLoaded">
-        <h3>No quotations found</h3>
-        <p *ngIf="searchTerm || statusFilter !== 'all'">There are no quotations matching your current filters.</p>
-        <p *ngIf="!searchTerm && statusFilter === 'all'">No quotations available at the moment.</p>
-        <button 
-          *ngIf="searchTerm || statusFilter !== 'all'" 
-          (click)="searchTerm = ''; statusFilter = 'all'; applyFilters()"
-          class="btn btn-primary"
-        >
-          Clear Filters
-        </button>
-      </div>
+      <h3>No quotations found</h3>
+      <p *ngIf="searchTerm || statusFilter !== 'all'">There are no quotations matching your current filters.</p>
+      <p *ngIf="!searchTerm && statusFilter === 'all'">No quotations received from vendors yet.</p>
+      <button 
+        *ngIf="searchTerm || statusFilter !== 'all'" 
+        (click)="searchTerm = ''; statusFilter = 'all'; applyFilters()"
+        class="btn btn-primary"
+      >
+        Clear Filters
+      </button>
     </div>
   </div>
 
@@ -252,7 +264,7 @@
   <div *ngIf="selectedQuotation" class="modal-overlay" (click)="closeDetails()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>Quotation Details - {{ selectedQuotation.id }}</h2>
+        <h2>Quotation Details - {{ selectedQuotation.quotationNumber }}</h2>
         <button class="close-btn" (click)="closeDetails()">&times;</button>
       </div>
       
@@ -260,79 +272,79 @@
         <div class="details-grid">
           <div class="detail-item">
             <span class="detail-label">Vendor:</span>
-            <span class="detail-value">{{ selectedQuotation.vendorName }}</span>
+            <span class="detail-value">{{ selectedQuotation.vendor?.name || '-' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Vendor Email:</span>
+            <span class="detail-value">{{ selectedQuotation.vendor?.mail || '-' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Vendor Contact:</span>
+            <span class="detail-value">{{ selectedQuotation.vendor?.contactNo || '-' }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">Request ID:</span>
-            <span class="detail-value">{{ selectedQuotation.requestId }}</span>
+            <span class="detail-value">#{{ selectedQuotation.leaseRequest?.id || '-' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Status:</span>
-            <span class="detail-value">
-              <span class="status-badge" [ngClass]="'status-' + selectedQuotation.status">
-                {{ selectedQuotation.status | titlecase }}
-              </span>
-            </span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Submitted:</span>
-            <span class="detail-value">{{ selectedQuotation.submittedDate | date:'mediumDate' }}</span>
+            <span class="detail-label">Quote Date:</span>
+            <span class="detail-value">{{ selectedQuotation.quoteDate | date:'mediumDate' }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">Valid Until:</span>
             <span class="detail-value">{{ selectedQuotation.validUntil | date:'mediumDate' }}</span>
           </div>
-          <div class="detail-item">
-            <span class="detail-label">Total Amount:</span>
-            <span class="detail-value amount">${{ getTotalAmount(selectedQuotation) | number:'1.2-2' }}</span>
-          </div>
-          
-          <div class="detail-item full-width" *ngIf="selectedQuotation.notes">
-            <span class="detail-label">Notes:</span>
-            <p class="detail-value notes">{{ selectedQuotation.notes }}</p>
-          </div>
         </div>
         
         <div class="items-table">
-          <h3>Items</h3>
+          <h3>Quotation Details</h3>
           <table>
             <thead>
               <tr>
                 <th>Description</th>
                 <th class="text-right">Quantity</th>
                 <th class="text-right">Unit Price</th>
-                <th class="text-right">Total</th>
+                <th class="text-right">Subtotal</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let item of selectedQuotation.items">
-                <td>{{ item.description }}</td>
-                <td class="text-right">{{ item.quantity }}</td>
-                <td class="text-right">${{ item.unitPrice | number:'1.2-2' }}</td>
-                <td class="text-right">${{ item.total | number:'1.2-2' }}</td>
+              <tr>
+                <td>{{ selectedQuotation.itemDescription }}</td>
+                <td class="text-right">{{ selectedQuotation.itemQuantity }}</td>
+                <td class="text-right">₹{{ selectedQuotation.unitPrice | number:'1.2-2' }}</td>
+                <td class="text-right">₹{{ selectedQuotation.subtotal | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td colspan="3" class="text-right">Tax ({{ selectedQuotation.taxPercent }}%):</td>
+                <td class="text-right">₹{{ selectedQuotation.taxAmount | number:'1.2-2' }}</td>
               </tr>
               <tr class="total-row">
-                <td colspan="3" class="text-right"><strong>Total:</strong></td>
-                <td class="text-right"><strong>${{ getTotalAmount(selectedQuotation) | number:'1.2-2' }}</strong></td>
+                <td colspan="3" class="text-right"><strong>Total Amount:</strong></td>
+                <td class="text-right"><strong>₹{{ selectedQuotation.totalAmount | number:'1.2-2' }}</strong></td>
               </tr>
             </tbody>
           </table>
         </div>
         
+        <div class="detail-item full-width" *ngIf="selectedQuotation.termsAndConditions">
+          <span class="detail-label">Terms & Conditions:</span>
+          <p class="detail-value notes">{{ selectedQuotation.termsAndConditions }}</p>
+        </div>
+        
         <div class="modal-actions">
           <button 
-            *ngIf="selectedQuotation.status !== 'accepted'"
-            (click)="onStatusChange(selectedQuotation, 'accepted')"
+            *ngIf="selectedQuotation.status === 'PENDING' || !selectedQuotation.status"
+            (click)="approveQuotation(selectedQuotation)"
             class="btn btn-success"
+            [disabled]="isApproving"
           >
-            Accept Quotation
+            ✅ {{ isApproving ? 'Approving...' : 'Approve Quotation' }}
           </button>
           <button 
-            *ngIf="selectedQuotation.status !== 'rejected'"
-            (click)="onStatusChange(selectedQuotation, 'rejected')"
-            class="btn btn-danger"
+            (click)="downloadPdf(selectedQuotation)"
+            class="btn btn-primary"
           >
-            Reject Quotation
+            Download PDF
           </button>
           <button 
             (click)="closeDetails()"
