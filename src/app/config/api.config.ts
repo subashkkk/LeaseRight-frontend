@@ -1,11 +1,13 @@
+import { environment } from '../../environments/environment';
+
 /**
  * API Configuration
  * Central place to manage all backend API endpoints
  */
 
 export const API_CONFIG = {
-  // Base URL
-  BASE_URL: 'http://localhost:8080',
+  // Base URL - uses environment config
+  BASE_URL: environment.apiUrl,
   
   // Auth Endpoints
   AUTH: {
